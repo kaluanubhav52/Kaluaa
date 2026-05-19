@@ -1,3 +1,15 @@
+# Don't Remove Credit @CodeFlix_Bots, @rohit_1888
+# Ask Doubt on telegram @CodeflixSupport
+#
+# Copyright (C) 2025 by Codeflix-Bots@Github, < https://github.com/Codeflix-Bots >.
+#
+# This file is part of < https://github.com/Codeflix-Bots/FileStore > project,
+# and is released under the MIT License.
+# Please see < https://github.com/Codeflix-Bots/FileStore/blob/master/LICENSE >
+#
+# All rights reserved.
+#
+
 import asyncio
 import os
 import random
@@ -75,7 +87,7 @@ async def start_command(client: Client, message: Message):
             if "verify_" in text:
                 _, token = text.split("_", 1)
                 if verify_status['verify_token'] != token:
-                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍𝗈𝗄𝖾𝗇. 𝖯𝗅𝖾𝖺𝗌𝖾 /start 𝖺𝗀𝖺𝗂𝗇.")
+                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍𝗈𝗄𝖾𝗇. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀𝖺𝗂𝗇.")
 
                 await db.update_verify_status(id, is_verified=True, verified_time=time.time())
                 current = await db.get_verify_count(id)
@@ -107,7 +119,7 @@ async def start_command(client: Client, message: Message):
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
                 ]
                 return await message.reply(
-                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b><b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b></b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -131,17 +143,18 @@ async def start_command(client: Client, message: Message):
                 print(f"Error decoding ID: {e}")
                 return
 
-        # Reset cancel state for this user before sending
+        # Reset cancel state for this user before starting delivery
         cancel_tasks[user_id] = False
 
-        # 🔥 FIXED: Update Channel ke sath side me CANCEL button add kar diya hai 🔥
+        # ✅ Update Channel and Cancel buttons in a clean inline setup
         wait_markup = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("📢 Update Channel", url="https://t.me/Movies8777"),
+                InlineKeyboardButton("📢 Update Channel", url="https://t.me/Movies8777")
+            ],[
                 InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}")
             ]
         ])
-        temp_msg = await message.reply("**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**...", reply_markup=wait_markup)
+        temp_msg = await message.reply("<b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**...</b>", reply_markup=wait_markup)
         
         try:
             messages = await get_messages(client, ids)
@@ -154,7 +167,7 @@ async def start_command(client: Client, message: Message):
 
         codeflix_msgs = []
         for msg in messages:
-            # Check if user clicked cancel button mid-way
+            # 🔥 LOOP KE ANDAR CHECK: Agar user ne cancel kiya to turant ruk jao
             if cancel_tasks.get(user_id, False):
                 break
 
@@ -178,20 +191,21 @@ async def start_command(client: Client, message: Message):
                 print(f"Failed to send message: {e}")
                 pass
 
-            # ⏱️ 1.5 Seconds gap between each file
+            # ⏱️ 1.5 Seconds gap between each file delivery
             await asyncio.sleep(1.5)
 
-        # Clear cancel state for user
+        # Check if the process ended because of cancellation
         is_cancelled = cancel_tasks.pop(user_id, False)
 
-        # Agar cancel kiya toh temporary message block clean, baaki process close
+        # Remove the temporary "Please Wait" message
         try:
             await temp_msg.delete()
         except:
             pass
 
+        # If user cancelled, stop right here and notify them
         if is_cancelled:
-            await message.reply_text("❌ **Process Cancelled by user.**")
+            await message.reply_text("❌ **File delivery cancelled by user.**")
             return
 
         if FILE_AUTO_DELETE > 0:
@@ -248,24 +262,19 @@ async def start_command(client: Client, message: Message):
 
         return
 
-# 🔥 CALLBACK HANDLER FOR CANCEL BUTTON 🔥
+# 🔥 FIXED & PERFECTED CALLBACK HANDLER FOR CANCEL BUTTON 🔥
 @Bot.on_callback_query(filters.regex(r"^cancel_delivery_"))
 async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
     target_user_id = int(callback_query.data.split("_")[2])
     
-    # Check if the clicker is the actual user who requested the file
+    # Check if the person clicking is the actual file requester
     if callback_query.from_user.id != target_user_id:
         await callback_query.answer("⚠️ Yeh button aapke liye nahi hai!", show_alert=True)
         return
 
-    # Mark the state as cancelled
+    # Trigger cancellation flag
     cancel_tasks[target_user_id] = True
     await callback_query.answer("❌ Cancelling file delivery...", show_alert=False)
-    
-    try:
-        await callback_query.message.delete()
-    except:
-        pass
 
 
 #=====================================================================================##
