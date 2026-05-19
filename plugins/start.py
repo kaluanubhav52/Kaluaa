@@ -1,3 +1,15 @@
+# Don't Remove Credit @CodeFlix_Bots, @rohit_1888
+# Ask Doubt on telegram @CodeflixSupport
+#
+# Copyright (C) 2025 by Codeflix-Bots@Github, < https://github.com/Codeflix-Bots >.
+#
+# This file is part of < https://github.com/Codeflix-Bots/FileStore > project,
+# and is released under the MIT License.
+# Please see < https://github.com/Codeflix-Bots/FileStore/blob/master/LICENSE >
+#
+# All rights reserved.
+#
+
 import asyncio
 import os
 import random
@@ -10,8 +22,8 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode, ChatAction
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, ChatInviteLink, ChatPrivileges
-from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
-from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated, UserNotParticipant
+from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MessageNotModified
+from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated, MessageDeleteForbidden
 from bot import Bot
 from config import *
 from helper_func import *
@@ -75,7 +87,7 @@ async def start_command(client: Client, message: Message):
             if "verify_" in text:
                 _, token = text.split("_", 1)
                 if verify_status['verify_token'] != token:
-                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
+                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺ʟ𝗂ᴅ 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
 
                 await db.update_verify_status(id, is_verified=True, verified_time=time.time())
                 current = await db.get_verify_count(id)
@@ -107,7 +119,7 @@ async def start_command(client: Client, message: Message):
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
                 ]
                 return await message.reply(
-                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜ𝗿 ᴛᴏᴋ𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -155,7 +167,7 @@ async def start_command(client: Client, message: Message):
 
         codeflix_msgs = []
         for msg in messages:
-            # 🔄 Yields CPU execution context for a split frame to process the callback query trigger
+            # 🔄 Yields CPU execution context for a split frame to process the callback query trigger immediately
             await asyncio.sleep(0.05)
 
             # Critical Interruption Check: immediately exit loop if cancel button is triggered
@@ -189,7 +201,7 @@ async def start_command(client: Client, message: Message):
         # Retrieve structural cancellation flag and clear state cache
         was_cancelled = cancel_tasks.pop(user_id, False)
 
-        # Destructively clean temporary UI block
+        # Destructively clean temporary UI block safely
         try:
             await temp_msg.delete()
         except:
@@ -256,31 +268,42 @@ async def start_command(client: Client, message: Message):
 
         
 
-# 🔥 FIXED CALLBACK RECEPTACLE FOR INTEGRATED INTERRUPTIONS 🔥
-@Bot.on_callback_query(filters.regex(r"^cancel_delivery_"))
+# 🔥 FIXED & OVERRIDDEN CALLBACK QUEUE FOR ABSOLUTE SAFETY 🔥
+@Bot.on_callback_query(filters.regex(r"^cancel_delivery_"), group=-1)
 async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
     try:
         target_user_id = int(callback_query.data.split("_")[2])
     except (IndexError, ValueError):
-        await callback_query.answer("⚠️ Invalid Callback Data!", show_alert=True)
+        try: await callback_query.answer("⚠️ Invalid Callback Data!", show_alert=True)
+        except: pass
         return
     
     # Restrict interaction to the specific requester context
     if callback_query.from_user.id != target_user_id:
-        await callback_query.answer("⚠️ Yeh cancel button aapke liye nahi hai!", show_alert=True)
+        try: await callback_query.answer("⚠️ Yeh cancel button aapke liye nahi hai!", show_alert=True)
+        except: pass
+        return
+
+    # Check if already cancelled to prevent double-click 'MessageNotModified' exception
+    if cancel_tasks.get(target_user_id, False) is True:
+        try: await callback_query.answer("⏳ Processing cancellation, please wait...", show_alert=False)
+        except: pass
         return
 
     # Commit structural cancel flag change inside the memory dict instantly
     cancel_tasks[target_user_id] = True
     
-    # Send immediate acknowledgement back to Telegram to resolve loading bar
-    await callback_query.answer("❌ Stopping delivery queue...", show_alert=False)
+    # Send immediate acknowledgement back to Telegram to resolve loading bar instantly
+    try:
+        await callback_query.answer("❌ Stopping delivery queue...", show_alert=False)
+    except:
+        pass
     
-    # Destruct current message view explicitly safely
+    # Destruct current interface safely without triggering text modifications
     try:
         await callback_query.message.delete()
-    except Exception as e:
-        print(f"Error removing message view on cancel callback: {e}")
+    except (MessageDeleteForbidden, Exception):
+        pass
 
 
 #=====================================================================================##
