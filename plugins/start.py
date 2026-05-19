@@ -1,15 +1,3 @@
-# Don't Remove Credit @CodeFlix_Bots, @rohit_1888
-# Ask Doubt on telegram @CodeflixSupport
-#
-# Copyright (C) 2025 by Codeflix-Bots@Github, < https://github.com/Codeflix-Bots >.
-#
-# This file is part of < https://github.com/Codeflix-Bots/FileStore > project,
-# and is released under the MIT License.
-# Please see < https://github.com/Codeflix-Bots/FileStore/blob/master/LICENSE >
-#
-# All rights reserved.
-#
-
 import asyncio
 import os
 import random
@@ -87,7 +75,7 @@ async def start_command(client: Client, message: Message):
             if "verify_" in text:
                 _, token = text.split("_", 1)
                 if verify_status['verify_token'] != token:
-                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍𝗈𝗄𝖾𝗇. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀𝖺𝗂𝗇.")
+                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
 
                 await db.update_verify_status(id, is_verified=True, verified_time=time.time())
                 current = await db.get_verify_count(id)
@@ -101,7 +89,7 @@ async def start_command(client: Client, message: Message):
                 btn = [[InlineKeyboardButton("🚀 Gᴇᴛ Fɪʟᴇ Nᴏᴡ", url=f"https://t.me/{client.username}?start={file_id}")]]
                 
                 return await message.reply(
-                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVᴀʟɪᴅ ғᴏʀ: {get_exp_time(VERIFY_EXPIRE)}\n\n"
+                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVαʟɪᴅ ғᴏʀ: {get_exp_time(VERIFY_EXPIRE)}\n\n"
                     "Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 👇",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
@@ -119,7 +107,7 @@ async def start_command(client: Client, message: Message):
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
                 ]
                 return await message.reply(
-                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜ𝗿 ᴛᴏᴋ𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -154,7 +142,7 @@ async def start_command(client: Client, message: Message):
                 InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}")
             ]
         ])
-        temp_msg = await message.reply("⚠️ <b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**</b>", reply_markup=wait_markup)
+        temp_msg = await message.reply("<b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**</b>", reply_markup=wait_markup)
         
         try:
             messages = await get_messages(client, ids)
@@ -167,6 +155,9 @@ async def start_command(client: Client, message: Message):
 
         codeflix_msgs = []
         for msg in messages:
+            # 🔄 Yields CPU execution context for a split frame to process the callback query trigger
+            await asyncio.sleep(0.05)
+
             # Critical Interruption Check: immediately exit loop if cancel button is triggered
             if cancel_tasks.get(user_id, False) is True:
                 break
@@ -193,7 +184,6 @@ async def start_command(client: Client, message: Message):
                 pass
 
             # ⏱️ Smooth Asynchronous Delivery Intermission (1.5 seconds)
-            # This yields execution to allow backend query events to alter states
             await asyncio.sleep(1.5)
 
         # Retrieve structural cancellation flag and clear state cache
@@ -207,7 +197,7 @@ async def start_command(client: Client, message: Message):
 
         # Stop process flow immediately if cancellation occurred
         if was_cancelled:
-            await message.reply_text("❌ **File delivery has been cancelled.**")
+            await message.reply_text("❌ **File delivery has been cancelled successfully.**")
             return
 
         if FILE_AUTO_DELETE > 0:
@@ -235,7 +225,7 @@ async def start_command(client: Client, message: Message):
                 ) if reload_url else None
 
                 await notification_msg.edit(
-                    "<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\nᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
+                    "<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\nᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -264,7 +254,7 @@ async def start_command(client: Client, message: Message):
 
         return
 
-# 🔥 FIXED & ROBUST CALLBACK RECEPTACLE FOR INTEGRATED INTERRUPTIONS 🔥
+# 🔥 FIXED CALLBACK RECEPTACLE FOR INTEGRATED INTERRUPTIONS 🔥
 @Bot.on_callback_query(filters.regex(r"^cancel_delivery_"))
 async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
     try:
@@ -278,7 +268,7 @@ async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery
         await callback_query.answer("⚠️ Yeh cancel button aapke liye nahi hai!", show_alert=True)
         return
 
-    # Commit structural cancel flag change inside the memory dict
+    # Commit structural cancel flag change inside the memory dict instantly
     cancel_tasks[target_user_id] = True
     
     # Send immediate acknowledgement back to Telegram to resolve loading bar
