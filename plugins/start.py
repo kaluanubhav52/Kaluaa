@@ -1,18 +1,35 @@
+# Don't Remove Credit @CodeFlix_Bots, @rohit_1888
+# Ask Doubt on telegram @CodeflixSupport
+#
+# Copyright (C) 2025 by Codeflix-Bots@Github, < https://github.com/Codeflix-Bots >.
+#
+# This file is part of < https://github.com/Codeflix-Bots/FileStore > project,
+# and is released under the MIT License.
+# Please see < https://github.com/Codeflix-Bots/FileStore/blob/master/LICENSE >
+#
+# All rights reserved.
+#
+
 import asyncio
 import os
 import random
-import string
+import sys
+import re
+import string 
+import string as rohit
 import time
-from datetime import datetime, timedelta, timezone
-from pyrogram import Client, filters
+from datetime import datetime, timedelta
+from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode, ChatAction
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.errors import FloodWait
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, ChatInviteLink, ChatPrivileges
+from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
+from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated, UserNotParticipant
 from bot import Bot
 from config import *
 from helper_func import *
 from database.database import *
 from database.db_premium import *
+
 
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
@@ -20,71 +37,141 @@ TUT_VID = f"{TUT_VID}"
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
-    is_premium = await is_premium_user(user_id)
+    id = message.from_user.id
+    is_premium = await is_premium_user(id)
 
+    # Add user if not already present
     if not await db.present_user(user_id):
-        try: await db.add_user(user_id)
-        except: pass
+        try:
+            await db.add_user(user_id)
+        except:
+            pass
 
+    # ✅ Check Force Subscription
     if not await is_subscribed(client, user_id):
+        #await temp.delete()
         return await not_joined(client, message)
 
+    # Check if user is banned
     banned_users = await db.get_ban_users()
     if user_id in banned_users:
-        return await message.reply_text("<b>⛔️ You are Bᴀɴɴᴇᴅ.</b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Contact Support", url=BAN_SUPPORT)]]))
+        return await message.reply_text(
+            "<b>⛔️ You are Bᴀɴɴᴇᴅ from using this bot.</b>\n\n"
+            "<i>Contact support if you think this is a mistake.</i>",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("Contact Support", url=BAN_SUPPORT)]]
+            )
+        )
 
+    # File auto-delete time in seconds (Set your desired time in seconds here)
     FILE_AUTO_DELETE = await db.get_del_timer()
     text = message.text
 
     if len(text) > 7:
-        try: base64_string = text.split(" ", 1)[1]
-        except IndexError: return
+        # 1️⃣ Extract base64_string first (Zaruri hai taaki save ho sake)
+        try:
+            base64_string = text.split(" ", 1)[1]
+        except IndexError:
+            return
 
-        verify_status = await db.get_verify_status(user_id)
+        # Token verification status
+        verify_status = await db.get_verify_status(id)
 
         if SHORTLINK_URL or SHORTLINK_API:
+            # Check for token expiry
             if verify_status['is_verified'] and VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
                 await db.update_verify_status(user_id, is_verified=False)
 
+            # 2️⃣ CASE: Jab banda token verify karke wapas aaye
             if "verify_" in text:
                 _, token = text.split("_", 1)
                 if verify_status['verify_token'] != token:
-                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍𝗈𝗄𝖾𝗇.")
-                await db.update_verify_status(user_id, is_verified=True, verified_time=time.time())
+                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺𝗅𝗂𝖽 𝗍𝗈𝗄𝖾𝗇. 𝖯𝗅𝖾𝖺𝗌𝖾 /start 𝖺𝗀𝖺𝗂𝗇.")
+
+                await db.update_verify_status(id, is_verified=True, verified_time=time.time())
+                current = await db.get_verify_count(id)
+                await db.set_verify_count(id, current + 1)
+
+                # Database se original link (base64_string) uthayen
                 file_id = verify_status.get("link", "")
-                return await message.reply("✅ <b>Verified!</b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🚀 Gᴇᴛ Fɪʟᴇ Nᴏᴡ", url=f"https://t.me/{client.username}?start={file_id}")]]))
+                
+                # 🔥 YAHAN ADD KIYA HAI "GET FILE" BUTTON 🔥
+                btn = [[InlineKeyboardButton("🚀 Gᴇᴛ Fɪʟᴇ Nᴏᴡ", url=f"https://t.me/{client.username}?start={file_id}")]]
+                
+                return await message.reply(
+                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVᴀʟɪᴅ ғᴏʀ: {get_exp_time(VERIFY_EXPIRE)}\n\n"
+                    "Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 👇",
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
 
+            # 3️⃣ CASE: Jab banda verified na ho (Ads dikhao)
             if not verify_status['is_verified'] and not is_premium:
-                token = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-                await db.update_verify_status(user_id, verify_token=token, link=base64_string)
+                token = ''.join(random.choices(rohit.ascii_letters + rohit.digits, k=10))
+                
+                # Yahan link=base64_string save kar rahe hain 👇
+                await db.update_verify_status(id, verify_token=token, link=base64_string)
+                
                 link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
-                return await message.reply("<b>Token expired. Refresh to continue:</b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("• ᴏᴘᴇɴ ʟɪɴᴋ •", url=link)]]))
+                btn = [
+                    [InlineKeyboardButton("• ᴏᴘᴇɴ ʟɪɴᴋ •", url=link),
+                     InlineKeyboardButton("• ᴛᴜᴛᴏʀɪᴀʟ •", url=TUT_VID)],
+                    [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
+                ]
+                return await message.reply(
+                    f"𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝘁𝗼 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
 
-        # Decoding
-        string_data = await decode(base64_string)
-        argument = string_data.split("-")
-        ids = range(int(int(argument[1]) / abs(client.db_channel.id)), int(int(argument[2]) / abs(client.db_channel.id)) + 1) if len(argument) == 3 else [int(int(argument[1]) / abs(client.db_channel.id))]
+        # 4️⃣ CASE: Jab banda verified ho (File send karo)
+        string = await decode(base64_string)
+        argument = string.split("-")
 
-        # Please Wait Message
-        temp_msg = await message.reply("<b>Please wait... Sending your files...</b>")
-        messages = await get_messages(client, ids)
-        codeflix_msgs = []
+        ids = []
+        if len(argument) == 3:
+            try:
+                start = int(int(argument[1]) / abs(client.db_channel.id))
+                end = int(int(argument[2]) / abs(client.db_channel.id))
+                ids = range(start, end + 1) if start <= end else list(range(start, end - 1, -1))
+            except Exception as e:
+                return print(f"Error decoding IDs: {e}")
+            
+        elif len(argument) == 2:
+            try:
+                ids = [int(int(argument[1]) / abs(client.db_channel.id))]
+            except Exception as e:
+                print(f"Error decoding ID: {e}")
+                return
 
+        temp_msg = await message.reply("<b>Please wait...</b>")
         try:
-            for msg in messages:
-                if not msg.text and not msg.media: continue
-                caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and bool(msg.document) else ("" if not msg.caption else msg.caption.html))
-                try:
-                    copied_msg = await msg.copy(chat_id=user_id, caption=caption, parse_mode=ParseMode.HTML, protect_content=PROTECT_CONTENT)
-                    codeflix_msgs.append(copied_msg)
-                    await asyncio.sleep(1.5) # 1.5s Delay
-                except FloodWait as e:
-                    await asyncio.sleep(e.x)
-                    copied_msg = await msg.copy(chat_id=user_id, caption=caption, parse_mode=ParseMode.HTML, protect_content=PROTECT_CONTENT)
-                    codeflix_msgs.append(copied_msg)
-                    await asyncio.sleep(1.5)
+            messages = await get_messages(client, ids)
+        except Exception as e:
+            await message.reply_text("Something went wrong!")
+            print(f"Error getting messages: {e}")
+            return
         finally:
-            await temp_msg.delete() # Files send hone ke baad delete
+            await temp_msg.delete()
+
+        codeflix_msgs = []
+        for msg in messages:
+            caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, 
+                                             filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and bool(msg.document)
+                       else ("" if not msg.caption else msg.caption.html))
+
+            reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
+
+            try:
+                copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
+                                            reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
+                codeflix_msgs.append(copied_msg)
+            except FloodWait as e:
+                await asyncio.sleep(e.x)
+                copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
+                                            reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
+                codeflix_msgs.append(copied_msg)
+            except Exception as e:
+                print(f"Failed to send message: {e}")
+                pass
 
         if FILE_AUTO_DELETE > 0:
             notification_msg = await message.reply(
