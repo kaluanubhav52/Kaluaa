@@ -22,6 +22,9 @@ from pytz import timezone
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
 
+# Global dictionary to trace cancel states for active users
+cancel_tasks = {}
+
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
@@ -81,9 +84,8 @@ async def start_command(client: Client, message: Message):
                 # Fetching original saved link safely
                 file_id = verify_status.get("link", "")
                 if not file_id:
-                    file_id = base64_string  # Fallback logic if link is empty
+                    file_id = base64_string  
 
-                # ✅ FIXED: Get File Button logic error free code
                 btn = [[InlineKeyboardButton("🚀 Gᴇᴛ Fɪʟᴇ Nᴏᴡ", url=f"https://t.me/{client.username}?start={file_id}")]]
                 
                 return await message.reply(
@@ -96,7 +98,6 @@ async def start_command(client: Client, message: Message):
             if not verify_status['is_verified'] and not is_premium:
                 token = ''.join(random.choices(rohit.ascii_letters + rohit.digits, k=10))
                 
-                # Save actual base64 link before sending user to shortener
                 await db.update_verify_status(id, verify_token=token, link=base64_string)
                 
                 link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
@@ -106,7 +107,7 @@ async def start_command(client: Client, message: Message):
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
                 ]
                 return await message.reply(
-                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝐮𝗿 𝘁𝗼𝗸𝗲𝗻 𝘁𝗼 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -130,11 +131,17 @@ async def start_command(client: Client, message: Message):
                 print(f"Error decoding ID: {e}")
                 return
 
-        # 🔥 UPDATE CHANNEL BUTTON KE SATH PLEASE WAIT MESSAGE (Saari files aane tak delete nahi hoga)
+        # Reset cancel state for this user before sending
+        cancel_tasks[user_id] = False
+
+        # 🔥 FIXED: Update Channel ke sath side me CANCEL button add kar diya hai 🔥
         wait_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📢 Update Channel", url="https://t.me/pratilipifm0900")]
+            [
+                InlineKeyboardButton("📢 Update Channel", url="https://t.me/Movies8777"),
+                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}")
+            ]
         ])
-        temp_msg = await message.reply("**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**", reply_markup=wait_markup)
+        temp_msg = await message.reply("**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**...", reply_markup=wait_markup)
         
         try:
             messages = await get_messages(client, ids)
@@ -147,6 +154,10 @@ async def start_command(client: Client, message: Message):
 
         codeflix_msgs = []
         for msg in messages:
+            # Check if user clicked cancel button mid-way
+            if cancel_tasks.get(user_id, False):
+                break
+
             caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, 
                                              filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and bool(msg.document)
                        else ("" if not msg.caption else msg.caption.html))
@@ -159,6 +170,7 @@ async def start_command(client: Client, message: Message):
                 codeflix_msgs.append(copied_msg)
             except FloodWait as e:
                 await asyncio.sleep(e.x)
+                if cancel_tasks.get(user_id, False): break
                 copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
                                             reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
                 codeflix_msgs.append(copied_msg)
@@ -166,14 +178,21 @@ async def start_command(client: Client, message: Message):
                 print(f"Failed to send message: {e}")
                 pass
 
-            # ⏱️ DELAY OF 1.5 SECONDS BETWEEN EACH FILE DELIVERY
+            # ⏱️ 1.5 Seconds gap between each file
             await asyncio.sleep(1.5)
 
-        # ✅ JAB SAARI FILES SEND HO JAYEGI TABHI "PLEASE WAIT" DELETE HOGA
+        # Clear cancel state for user
+        is_cancelled = cancel_tasks.pop(user_id, False)
+
+        # Agar cancel kiya toh temporary message block clean, baaki process close
         try:
             await temp_msg.delete()
         except:
             pass
+
+        if is_cancelled:
+            await message.reply_text("❌ **Process Cancelled by user.**")
+            return
 
         if FILE_AUTO_DELETE > 0:
             notification_msg = await message.reply(
@@ -229,6 +248,26 @@ async def start_command(client: Client, message: Message):
 
         return
 
+# 🔥 CALLBACK HANDLER FOR CANCEL BUTTON 🔥
+@Bot.on_callback_query(filters.regex(r"^cancel_delivery_"))
+async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
+    target_user_id = int(callback_query.data.split("_")[2])
+    
+    # Check if the clicker is the actual user who requested the file
+    if callback_query.from_user.id != target_user_id:
+        await callback_query.answer("⚠️ Yeh button aapke liye nahi hai!", show_alert=True)
+        return
+
+    # Mark the state as cancelled
+    cancel_tasks[target_user_id] = True
+    await callback_query.answer("❌ Cancelling file delivery...", show_alert=False)
+    
+    try:
+        await callback_query.message.delete()
+    except:
+        pass
+
+
 #=====================================================================================##
 
 chat_data_cache = {}
@@ -278,10 +317,8 @@ async def not_joined(client: Client, message: Message):
 
                 except Exception as e:
                     print(f"Error with chat {chat_id}: {e}")
-                    try:
-                        return await temp.edit(f"<b><i>! Eʀʀᴏʀ, Cᴏɴᴛᴀᴄᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ @rohit_1888</i></b>")
-                    except:
-                        return
+                    try: return await temp.edit(f"<b><i>! Eʀʀᴏʀ, Cᴏɴᴛᴀᴄᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ @rohit_1888</i></b>")
+                    except: return
 
         try:
             buttons.append([
