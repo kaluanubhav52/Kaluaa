@@ -134,7 +134,7 @@ async def start_command(client: Client, message: Message):
         wait_markup = InlineKeyboardMarkup([
             [InlineKeyboardButton("📢 Update Channel", url="https://t.me/pratilipifm0900")]
         ])
-        temp_msg = await message.reply("⚠️ <b>PLEASE WAIT...</b>\n\n<i>Processing your request, please hold...</i>", reply_markup=wait_markup)
+        temp_msg = await message.reply("**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**", reply_markup=wait_markup)
         
         try:
             messages = await get_messages(client, ids)
