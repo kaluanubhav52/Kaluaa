@@ -34,7 +34,7 @@ from pytz import timezone
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
 
-# Global dictionary to trace cancel states for active users
+# Global dict for active cancellation tracking
 cancel_tasks = {}
 
 @Bot.on_message(filters.command('start') & filters.private)
@@ -119,7 +119,7 @@ async def start_command(client: Client, message: Message):
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
                 ]
                 return await message.reply(
-                    f"<b><b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b></b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 𝘆𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -143,10 +143,10 @@ async def start_command(client: Client, message: Message):
                 print(f"Error decoding ID: {e}")
                 return
 
-        # Reset cancel state for this user before starting delivery
+        # Explicitly initialize user's cancel key as False
         cancel_tasks[user_id] = False
 
-        # ✅ Update Channel and Cancel buttons in a clean inline setup
+        # Beautiful custom layout containing the update channel and cancellation key
         wait_markup = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("📢 Update Channel", url="https://t.me/Movies8777")
@@ -154,7 +154,7 @@ async def start_command(client: Client, message: Message):
                 InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}")
             ]
         ])
-        temp_msg = await message.reply("<b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**...</b>", reply_markup=wait_markup)
+        temp_msg = await message.reply("⚠️ <b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**</b>", reply_markup=wait_markup)
         
         try:
             messages = await get_messages(client, ids)
@@ -167,8 +167,8 @@ async def start_command(client: Client, message: Message):
 
         codeflix_msgs = []
         for msg in messages:
-            # 🔥 LOOP KE ANDAR CHECK: Agar user ne cancel kiya to turant ruk jao
-            if cancel_tasks.get(user_id, False):
+            # Critical Interruption Check: immediately exit loop if cancel button is triggered
+            if cancel_tasks.get(user_id, False) is True:
                 break
 
             caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, 
@@ -183,7 +183,8 @@ async def start_command(client: Client, message: Message):
                 codeflix_msgs.append(copied_msg)
             except FloodWait as e:
                 await asyncio.sleep(e.x)
-                if cancel_tasks.get(user_id, False): break
+                if cancel_tasks.get(user_id, False) is True: 
+                    break
                 copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
                                             reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
                 codeflix_msgs.append(copied_msg)
@@ -191,21 +192,22 @@ async def start_command(client: Client, message: Message):
                 print(f"Failed to send message: {e}")
                 pass
 
-            # ⏱️ 1.5 Seconds gap between each file delivery
+            # ⏱️ Smooth Asynchronous Delivery Intermission (1.5 seconds)
+            # This yields execution to allow backend query events to alter states
             await asyncio.sleep(1.5)
 
-        # Check if the process ended because of cancellation
-        is_cancelled = cancel_tasks.pop(user_id, False)
+        # Retrieve structural cancellation flag and clear state cache
+        was_cancelled = cancel_tasks.pop(user_id, False)
 
-        # Remove the temporary "Please Wait" message
+        # Destructively clean temporary UI block
         try:
             await temp_msg.delete()
         except:
             pass
 
-        # If user cancelled, stop right here and notify them
-        if is_cancelled:
-            await message.reply_text("❌ **File delivery cancelled by user.**")
+        # Stop process flow immediately if cancellation occurred
+        if was_cancelled:
+            await message.reply_text("❌ **File delivery has been cancelled.**")
             return
 
         if FILE_AUTO_DELETE > 0:
@@ -262,19 +264,31 @@ async def start_command(client: Client, message: Message):
 
         return
 
-# 🔥 FIXED & PERFECTED CALLBACK HANDLER FOR CANCEL BUTTON 🔥
+# 🔥 FIXED & ROBUST CALLBACK RECEPTACLE FOR INTEGRATED INTERRUPTIONS 🔥
 @Bot.on_callback_query(filters.regex(r"^cancel_delivery_"))
 async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
-    target_user_id = int(callback_query.data.split("_")[2])
+    try:
+        target_user_id = int(callback_query.data.split("_")[2])
+    except (IndexError, ValueError):
+        await callback_query.answer("⚠️ Invalid Callback Data!", show_alert=True)
+        return
     
-    # Check if the person clicking is the actual file requester
+    # Restrict interaction to the specific requester context
     if callback_query.from_user.id != target_user_id:
-        await callback_query.answer("⚠️ Yeh button aapke liye nahi hai!", show_alert=True)
+        await callback_query.answer("⚠️ Yeh cancel button aapke liye nahi hai!", show_alert=True)
         return
 
-    # Trigger cancellation flag
+    # Commit structural cancel flag change inside the memory dict
     cancel_tasks[target_user_id] = True
-    await callback_query.answer("❌ Cancelling file delivery...", show_alert=False)
+    
+    # Send immediate acknowledgement back to Telegram to resolve loading bar
+    await callback_query.answer("❌ Stopping delivery queue...", show_alert=False)
+    
+    # Destruct current message view explicitly safely
+    try:
+        await callback_query.message.delete()
+    except Exception as e:
+        print(f"Error removing message view on cancel callback: {e}")
 
 
 #=====================================================================================##
@@ -473,5 +487,5 @@ async def total_verify_count_cmd(client, message: Message):
 
 @Bot.on_message(filters.command('commands') & filters.private & admin)
 async def bcmd(bot: Bot, message: Message):        
-    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", callback_data = "close")]])
     await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
