@@ -251,21 +251,33 @@ async def start_command(client: Client, message: Message):
                 ) if reload_url else None
 
                 await notification_msg.edit(
-                    "<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\nᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
+                    "<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪ<b>ꜱ ꜱᴜᴄᴄᴇꜱ|ꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\n<b>ᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
                     reply_markup=keyboard
                 )
             except Exception as e:
                 print(f"Error updating notification with 'Get File Again' button: {e}")
     else:
-        reply_markup = InlineKeyboardMarkup(
+        # 🟢 Main Menu Keyboard Buttons Customization
+        buttons = [
+            [InlineKeyboardButton("• ᴄʜᴀʜɴᴇʟs •", url="https://t.me/Movies8777")],
             [
-                [InlineKeyboardButton("• ᴄʜᴀʜɴᴇʟs •", url="https://t.me/Movies8777")],
-                [
-                    InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
-                    InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
-                ]
+                InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data="about"),
+                InlineKeyboardButton('ʜᴇʟᴘ •', callback_data="help")
             ]
-        )
+        ]
+        
+        # 🟢 IS_ADMIN CHECK: Agar aap (Admin) start karoge toh hi Settings button niche judega
+        # Yeh check config file ke 'admin' function filter ka use karta hai
+        if isinstance(OWNER_ID, list):
+            is_admin = user_id in OWNER_ID
+        else:
+            is_admin = user_id == int(OWNER_ID)
+
+        if is_admin:
+            buttons.append([InlineKeyboardButton("‼️ SETTINGS ‼️", callback_data="open_settings_from_button")])
+
+        reply_markup = InlineKeyboardMarkup(buttons)
+
         await message.reply_photo(
             photo=START_PIC,
             caption=START_MSG.format(
