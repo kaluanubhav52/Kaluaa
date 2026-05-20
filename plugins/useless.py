@@ -73,7 +73,7 @@ async def stats(bot: Bot, message: Message):
         await message.reply(stats_text)
         
     except Exception as e:
-        await message.reply(f"❌ **Error while fetching stats:**\n`{str(e)}`
+        await message.reply(f"❌ **Error while fetching stats:**\n`{str(e)}`")
 #=====================================================================================##
 
 #=====================================================================================##
