@@ -28,55 +28,15 @@ from database.database import *
 
 #=====================================================================================##
 
-  # <--- Make sure timezone import hai upar
-
 @Bot.on_message(filters.command('stats') & admin)
 async def stats(bot: Bot, message: Message):
-    try:
-        # Calculate uptime using UTC aware datetime to fix offset error
-        now = datetime.now(timezone.utc)
-        
-        # Agar bot.uptime naive hai, toh use aware banayenge, nahi toh direct minus karenge
-        if bot.uptime.tzinfo is None:
-            uptime_bot = bot.uptime.replace(tzinfo=timezone.utc)
-        else:
-            uptime_bot = bot.uptime
-            
-        delta = now - uptime_bot
-        
-        # Simple self-contained time formatter
-        seconds = int(delta.total_seconds())
-        days, remainder = divmod(seconds, 86400)
-        hours, remainder = divmod(remainder, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        
-        uptime_string = ""
-        if days > 0: uptime_string += f"{days}d "
-        if hours > 0: uptime_string += f"{hours}h "
-        if minutes > 0: uptime_string += f"{minutes}m "
-        uptime_string += f"{seconds}s"
-        
-        # Total users count from database
-        users = await db.full_userbase()
-        total_users = len(users) if users else 0
-
-        # Custom stats layout
-        stats_text = (
-            "📊 **📊 BOT STATUS & STATS 📊**\n\n"
-            f"⏱️ **Uptime:** `{uptime_string}`\n"
-            f"👥 **Total Users:** `{total_users}`\n"
-            f"🤖 **Pyrogram Version:** `v{__version__}`\n"
-            f"🐍 **Python Version:** `v{sys.version.split()[0]}`\n\n"
-            "✨ *Bot is working smoothly!*"
-        )
-        
-        await message.reply(stats_text)
-        
-    except Exception as e:
-        await message.reply(f"❌ **Error while fetching stats:**\n`{str(e)}`")
-#=====================================================================================##
+    now = datetime.now()
+    delta = now - bot.uptime
+    time = get_readable_time(delta.seconds)
+    await message.reply(BOT_STATS_TEXT.format(uptime=time))
 
 #=====================================================================================##
+
 
 WAIT_MSG = "<b>Working....</b>"
 
