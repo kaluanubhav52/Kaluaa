@@ -52,6 +52,7 @@ async def start_command(client: Client, message: Message):
 
     # ✅ Check Force Subscription
     if not await is_subscribed(client, user_id):
+        #await temp.delete()
         return await not_joined(client, message)
 
     # Check if user is banned
@@ -65,14 +66,10 @@ async def start_command(client: Client, message: Message):
             )
         )
 
-    # File auto-delete time in seconds
-    FILE_AUTO_DELETE = await db.get_del_timer()
-    text = message.text
+    # File auto-delete time in seconds (Set your desired time in seconds here)
+    FILE_AUTO_DELETE = await db.get_del_timer()             # Example: 3600 seconds (1 hour)
 
-    # 🟢 CRITICAL FIX: Agar message text "/" se start ho raha hai aur link structure nahi hai, toh yahin stop karo
-    # Taaki /settings ya koi bhi command normal text samajh kar link shortener me na ghuse
-    if text.startswith("/") and "verify_" not in text and len(text.split()) == 1:
-        return
+
 
     if len(text) > 7:
         try:
