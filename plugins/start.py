@@ -259,7 +259,7 @@ async def start_command(client: Client, message: Message):
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
                 ],[
-                    InlineKeyboardButton("‼️ SETTINGS ‼️", callback_data="open_settings_from_button")
+                    InlineKeyboardButton("‼️ SETTINGS ‼️", callback_data="open_settings_from_button")]
 
                     
             ]
