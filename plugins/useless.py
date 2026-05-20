@@ -30,11 +30,44 @@ from database.database import *
 
 @Bot.on_message(filters.command('stats') & admin)
 async def stats(bot: Bot, message: Message):
-    now = datetime.now()
-    delta = now - bot.uptime
-    time = get_readable_time(delta.seconds)
-    await message.reply(BOT_STATS_TEXT.format(uptime=time))
+    try:
+        # Calculate uptime
+        now = datetime.now()
+        delta = now - bot.uptime
+        
+        # Simple self-contained time formatter (helper_func par depend nahi karega)
+        seconds = int(delta.total_seconds())
+        days, remainder = divmod(seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        uptime_string = ""
+        if days > 0: uptime_string += f"{days}d "
+        if hours > 0: uptime_string += f"{hours}h "
+        if minutes > 0: uptime_string += f"{minutes}m "
+        uptime_string += f"{seconds}s"
+        
+        # Total users count from database
+        users = await db.full_userbase()
+        total_users = len(users) if users else 0
 
+        # Custom defined text format (BOT_STATS_TEXT par depend nahi karega)
+        stats_text = (
+            "📊 **📊 BOT STATUS & STATS 📊**\n\n"
+            f"⏱️ **Uptime:** `{uptime_string}`\n"
+            f"👥 **Total Users:** `{total_users}`\n"
+            f"🤖 **Pyrogram Version:** `v{__version__}`\n"
+            f"🐍 **Python Version:** `v{sys.version.split()[0]}`\n\n"
+            "✨ *Bot is working smoothly!*"
+        )
+        
+        await message.reply(stats_text)
+        
+    except Exception as e:
+        # Agar phir bhi koi error aaye toh admin ko chat me pata chal jaye
+        await message.reply(f"❌ **Error while fetching stats:**\n`{str(e)}`")
+
+#=====================================================================================##
 
 #=====================================================================================##
 
