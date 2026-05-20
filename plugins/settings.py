@@ -4,7 +4,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from database import db
-
+from config import*
 # ══════════════════════════════════════════════════
 #              DYNAMIC KEYBOARDS GENERATOR          
 # ══════════════════════════════════════════════════
