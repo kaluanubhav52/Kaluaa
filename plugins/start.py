@@ -252,6 +252,8 @@ async def start_command(client: Client, message: Message):
                 ]
             ]
         )
+        if user_id in OWNER_ID:
+            buttons.append([InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs ⚙️", callback_data="layer:main")])
         await message.reply_photo(
             photo=START_PIC,
             caption=START_MSG.format(
