@@ -123,6 +123,27 @@ class Rohit:
             return data.get('value', 600)
         return 0
 
+        # DYNAMIC BOT SETTINGS MANAGEMENT
+    async def get_bot_settings(self):
+        settings = await self.bot_settings_data.find_one({'_id': 'bot_configuration'})
+        if not settings:
+            # Default values agar DB me data na ho
+            return {
+                'shortlink_url': 'vjlink.online',
+                'shortlink_api': '',
+                'verify_expire': 86400, # 24 hours in seconds
+                'is_verify_on': True
+            }
+        return settings
+
+    async def update_bot_setting(self, key: str, value):
+        await self.bot_settings_data.update_one(
+            {'_id': 'bot_configuration'},
+            {'$set': {key: value}},
+            upsert=True
+        )
+        
+
 
     # CHANNEL MANAGEMENT
     async def channel_exist(self, channel_id: int):
