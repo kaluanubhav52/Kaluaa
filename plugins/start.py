@@ -19,7 +19,7 @@ import string
 import string as rohit
 import time
 from datetime import datetime, timedelta
-from pyrogram import Client, filters, __version__
+from pyrogram import Client, filters, __version__, enums
 from pyrogram.enums import ParseMode, ChatAction
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, ChatInviteLink, ChatPrivileges
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MessageNotModified
@@ -116,7 +116,7 @@ async def start_command(client: Client, message: Message):
                 btn = [
                     [InlineKeyboardButton("• ᴏᴘᴇɴ ʟɪɴᴋ •", url=link),
                      InlineKeyboardButton("• ᴛᴜᴛᴏʀɪᴀʟ •", url=TUT_VID)],
-                    [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium")]
+                    [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium", style=enums.ButtonStyle.SUCCESS)]
                 ]
                 return await message.reply(
                     f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
@@ -149,9 +149,9 @@ async def start_command(client: Client, message: Message):
         # Beautiful custom layout containing the update channel and cancellation key
         wait_markup = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("📢 Update Channel", url="https://t.me/Movies8777")
+                InlineKeyboardButton("📢 Update Channel", url="https://t.me/HDFILM0900_BOT", style=enums.ButtonStyle.PRIMARY)
             ],[
-                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}")
+                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}", style=enums.ButtonStyle.DANGER)
             ]
         ])
         temp_msg = await message.reply("<b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**</b>", reply_markup=wait_markup)
@@ -245,7 +245,7 @@ async def start_command(client: Client, message: Message):
     else:
         reply_markup = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", url="https://t.me/Movies8777")],
+                [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", url="https://t.me/freestoryhubMR", style=enums.ButtonStyle.PRIMARY)],
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
