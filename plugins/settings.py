@@ -1,154 +1,141 @@
-
 #Codeflix_Botz
-#rohit_1888 on Tg
+#AC FILE SHARING BOT
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
-from database import db # Aapka updated async database class link
-from config import ADMINS # Ya jo bhi aapki admin list variable hai config me
+from database import db
 
-# ----------------- LAYER 1: MAIN MENU KEYBOARD ----------------- #
-async def get_main_menu_keyboard():
-    settings = await db.get_bot_settings()
-    
-    # 1. Start Photo Button Logic
-    if settings.get("start_photo"):
-        photo_text = "❌ Remove Start Photo"
-        photo_callback = "cb_toggle:start_photo"
-    else:
-        photo_text = "🖼️ Add Start Photo"
-        photo_callback = "cb_toggle:start_photo" # Photo validation step
-        
-    # 2. Verification Button Logic
-    v_status = "✅ ON" if settings.get("verification") else "❌ OFF"
-    v_text = f"🛡️ Verification: {v_status}"
-    
+# ══════════════════════════════════════════════════
+#              DYNAMIC KEYBOARDS GENERATOR          
+# ══════════════════════════════════════════════════
+
+async def get_main_panel():
+    """LAYER 1: Main Config Dashboard"""
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(photo_text, callback_data=photo_callback)],
-        [InlineKeyboardButton(v_text, callback_data="cb_toggle:verification")],
-        [InlineKeyboardButton(f"🕒 Time: {settings.get('token_time', '24 Hours')}", callback_data="cb_cycle:token_time")],
-        # Multi-layer Entry Button 👇
-        [InlineKeyboardButton("👑 Manage Plans & Premium 👑", callback_data="layer:plans")],
-        [InlineKeyboardButton("⚙️ Close Panel ⚙️", callback_data="cb_action:close")]
+        [InlineKeyboardButton("👑 PREMIUM PLAN", callback_data="layer:premium")],
+        [InlineKeyboardButton("🔗 LINK SHORTNER", callback_data="layer:shortner")],
+        [InlineKeyboardButton("🛡️ TOKEN VERIFICATION", callback_data="layer:token")], # Direct Verification par le jayega
+        [InlineKeyboardButton("📝 CUSTOM CAPTION", callback_data="layer:caption")],
+        [InlineKeyboardButton("📢 CUSTOM FORCE SUBSCRIBE", callback_data="layer:fsub")],
+        [InlineKeyboardButton("🖼️ CUSTOM THUMBNAIL", callback_data="layer:thumbnail")],
+        [InlineKeyboardButton("🔘 CUSTOM BUTTON", callback_data="layer:cbutton")],
+        [InlineKeyboardButton("🗑️ AUTO DELETE", callback_data="layer:autodel")],
+        [InlineKeyboardButton("🔒 PROTECT CONTENT", callback_data="layer:protect")],
+        [InlineKeyboardButton("📥 STREAM AND DOWNLOAD", callback_data="layer:stream")],
+        [InlineKeyboardButton("❌ CLOSE PANEL ❌", callback_data="action:close")]
     ])
     return keyboard
 
 
-# ----------------- LAYER 2: PLANS SUB-MENU KEYBOARD ----------------- #
-async def get_plans_menu_keyboard():
+async def get_first_verify_panel():
+    """LAYER 2: First Token Verification Details (No 2nd/3rd Layer)"""
     settings = await db.get_bot_settings()
-    
-    p_status = "✅ ON" if settings.get("premium_mode") else "❌ OFF"
-    p_text = f"⭐ Premium Mode: {p_status}"
-    
-    current_plan = settings.get("active_plan_type", "Free")
+    status_emoji = "✅" if settings.get("first_verify", False) else "❌"
     
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(p_text, callback_data="cb_toggle:premium_mode")],
-        [
-            InlineKeyboardButton(f"🔹 Free {'🟢' if current_plan == 'Free' else ''}", callback_data="set_plan:Free"),
-            InlineKeyboardButton(f"🔶 VIP {'🟢' if current_plan == 'VIP' else ''}", callback_data="set_plan:VIP")
-        ],
-        [InlineKeyboardButton(f"👑 Premium Pack {'🟢' if current_plan == 'Premium' else ''}", callback_data="set_plan:Premium")],
-        # Back Button to Layer 1 👇
-        [InlineKeyboardButton("🔙 Back to Main Settings", callback_data="layer:main")]
+        [InlineKeyboardButton("🔗 FIRST VERIFY SHORTNER", callback_data="action:set_shortner")],
+        [InlineKeyboardButton("📖 FIRST VERIFY TUTORIAL", callback_data="action:set_tutorial")],
+        [InlineKeyboardButton(f"🕒 FIRST VERIFY TIME: {settings.get('first_verify_time', '24 Hours')}", callback_data="cycle:vtime")],
+        [InlineKeyboardButton("📊 TOTAL USER VERIFIED TODAY", callback_data="action:stats")],
+        [InlineKeyboardButton(f"⚙️ FIRST VERIFY - {status_emoji}", callback_data="toggle:first_verify")],
+        [InlineKeyboardButton("🔙 BACK", callback_data="layer:main")] # Direct Main Menu par wapas layega
     ])
     return keyboard
 
 
-# -------------------- COMMAND HANDLER -------------------- #
+async def get_premium_panel():
+    """LAYER 2: Premium Sub-Menu"""
+    settings = await db.get_bot_settings()
+    p_status = "✅ ON" if settings.get("premium_mode", False) else "❌ OFF"
+    
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📝 PREMIUM PLAN MESSAGE", callback_data="action:prem_msg")],
+        [InlineKeyboardButton("➕ ADD PREMIUM USER ➕", callback_data="action:add_prem")],
+        [InlineKeyboardButton("➖ REMOVE PREMIUM USER ➖", callback_data="action:rem_prem")],
+        [InlineKeyboardButton("👥 PREMIUM USERS LIST", callback_data="action:list_prem")],
+        [InlineKeyboardButton(f"👑 PREMIUM IS ON - {p_status}", callback_data="toggle:premium_mode")],
+        [InlineKeyboardButton("🔙 BACK", callback_data="layer:main")]
+    ])
+    return keyboard
+
+# ══════════════════════════════════════════════════
+#                   CORE COMMAND HANDLER            
+# ══════════════════════════════════════════════════
+
 @Client.on_message(filters.command("settings") & filters.private)
-async def open_settings_panel(client: Client, message: Message):
-    user_id = message.from_user.id
-    
-    # Security check: Only admins can manage global panel
-    # Aap isse filters.user(ADMINS) se bhi handle kar sakte hain command layer par
-    if not await db.admin_exist(user_id):
-        return await message.reply_text("❌ This panel is restricted for Authorized Admins only.")
-
+async def open_settings_hub(client: Client, message: Message):
+    if not await db.admin_exist(message.from_user.id):
+        return
+        
     text = (
-        "╔════════════════════╗\n"
-        "║       ⚙️ **BOT SETTINGS MANAGER** ⚙️      ║\n"
-        "╚════════════════════╝\n\n"
-        "Welcome to the central control node. Modify operational logic live:"
+        "⚙️ **SETTINGS:**\n\n"
+        "CUSTOMIZE YOUR SETTINGS AS PER YOUR NEED."
     )
-    reply_markup = await get_main_menu_keyboard()
-    await message.reply_text(text, reply_markup=reply_markup)
+    await message.reply_text(text, reply_markup=await get_main_panel())
 
+# ══════════════════════════════════════════════════
+#                 CALLBACK GRAPH DISPATCHER         
+# ══════════════════════════════════════════════════
 
-# -------------------- CALLBACK MANAGER -------------------- #
-@Client.on_callback_query(filters.regex(r"^(layer:|cb_toggle:|cb_cycle:|cb_action:|set_plan:)"))
-async def core_settings_callback(client: Client, callback_query: CallbackQuery):
+@Client.on_callback_query(filters.regex(r"^(layer:|toggle:|cycle:|action:)"))
+async def process_settings_graph(client: Client, callback_query: CallbackQuery):
     data = callback_query.data
     user_id = callback_query.from_user.id
     
-    # Secure callback check
     if not await db.admin_exist(user_id):
-        return await callback_query.answer("⚠️ Unauthorized access denied.", show_alert=True)
+        return await callback_query.answer("⚠️ Access Denied.", show_alert=True)
         
     settings = await db.get_bot_settings()
 
-    # --- 1. LAYER / SCREEN SWITCHING ---
+    # --- 1. LAYER NAVIGATION ---
     if data == "layer:main":
-        text = "⚙️ **Main Core Config Panel:**"
-        reply_markup = await get_main_menu_keyboard()
-        await callback_query.message.edit_text(text, reply_markup=reply_markup)
-        return
+        text = "⚙️ **SETTINGS:**\n\nCUSTOMIZE YOUR SETTINGS AS PER YOUR NEED."
+        return await callback_query.message.edit_text(text, reply_markup=await get_main_panel())
         
-    elif data == "layer:plans":
-        text = "👑 **Plan & Tier Sub-Structure Menu:**\n\nConfigure premium gates or switch active deployment plans."
-        reply_markup = await get_plans_menu_keyboard()
-        await callback_query.message.edit_text(text, reply_markup=reply_markup)
-        return
+    elif data == "layer:token":
+        # Direct First Verification par switch karega (Bina 2nd/3rd choice dikhaye)
+        text = (
+            "🥇 **FIRST TOKEN VERIFICATION SETTINGS:**\n\n"
+            "Manage your link shorteners, tutorial tracks, and time bounds below:"
+        )
+        return await callback_query.message.edit_text(text, reply_markup=await get_first_verify_panel())
+        
+    elif data == "layer:premium":
+        msg_text = settings.get("premium_message", "PREMIUM PLAN DETAILS NOT DEFINED.")
+        text = f"👑 **PREMIUM PLAN:**\n\n`{msg_text}`"
+        return await callback_query.message.edit_text(text, reply_markup=await get_premium_panel())
 
-    # --- 2. CORE ACTION & TOGGLES ---
-    elif data.startswith("cb_toggle:"):
+    # --- 2. BOOLEAN TOGGLES ---
+    elif data.startswith("toggle:"):
         key = data.split(":")[1]
-        
-        # Specially handling photos since it's mixed with validation
-        if key == "start_photo":
-            if settings.get("start_photo"):
-                await db.update_bot_setting("start_photo", None)
-                await callback_query.answer("🗑️ Start Photo template dropped completely.", show_alert=True)
-            else:
-                # Agar aapko custom photo flow chalana ho toh force reply handle laga sakte ho.
-                # Abhi hum direct state toggle kar rahe hain with a default simulation trigger:
-                await db.update_bot_setting("start_photo", "AgACAgQAAxkBA...") 
-                await callback_query.answer("🖼️ Mock Start Photo asset set successfully!", show_alert=True)
-        else:
-            # For general booleans (Verification, Premium Mode)
-            current_status = settings.get(key, False)
-            await db.update_bot_setting(key, not current_status)
-            await callback_query.answer(f"🔄 '{key.upper()}' Status Toggled Successfully.")
+        current_state = settings.get(key, False)
+        await db.update_bot_setting(key, not current_state)
+        await callback_query.answer("🔄 Status Updated Live!")
 
-    elif data.startswith("cb_cycle:"):
-        # Cycle through custom verification token expiration windows
-        times = ["1 Hour", "12 Hours", "24 Hours", "48 Hours"]
-        curr_time = settings.get("token_time", "24 Hours")
-        next_idx = (times.index(curr_time) + 1) % len(times) if curr_time in times else 2
-        
-        await db.update_bot_setting("token_time", times[next_idx])
-        await callback_query.answer(f"🕒 Verification Expiry Token window shifted: {times[next_idx]}")
-        
-    elif data.startswith("set_plan:"):
-        target_plan = data.split(":")[1]
-        await db.update_bot_setting("active_plan_type", target_plan)
-        await callback_query.answer(f"👑 Global Plan Matrix re-routed to: {target_plan}")
+    # --- 3. VALUE CYCLES ---
+    elif data == "cycle:vtime":
+        intervals = ["1 Hour", "12 Hours", "24 Hours", "48 Hours"]
+        curr = settings.get("first_verify_time", "24 Hours")
+        nxt = intervals[(intervals.index(curr) + 1) % len(intervals)] if curr in intervals else "24 Hours"
+        await db.update_bot_setting("first_verify_time", nxt)
+        await callback_query.answer(f"🕒 Expiry set to {nxt}")
 
-    elif data == "cb_action:close":
-        await callback_query.message.delete()
-        return
+    # --- 4. DATA INPUT HANDLES ---
+    elif data in ["action:add_prem", "action:rem_prem", "action:set_shortner", "action:set_tutorial"]:
+        await callback_query.answer()
+        cancel_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 BACK", callback_data="layer:main")]])
+        return await callback_query.message.edit_text(
+            "ℹ️ **NOW SEND ME USER ID / URL VALUE:**\n\nSend `/cancel` to abort this process.", 
+            reply_markup=cancel_markup
+        )
 
-    # --- 3. DYNAMIC UI RE-RENDERING PIPELINE ---
-    # Refresh check to make sure the same screen rendering remains active
-    if "layer:plans" in callback_query.message.reply_markup.inline_keyboard[-1][0].callback_data or "set_plan:" in data or "premium_mode" in data:
-        text = "👑 **Plan & Tier Sub-Structure Menu:**\n\nConfigure premium gates or switch active deployment plans."
-        reply_markup = await get_plans_menu_keyboard()
-    else:
-        text = "⚙️ **Main Core Config Panel:**"
-        reply_markup = await get_main_menu_keyboard()
-        
-    try:
-        await callback_query.message.edit_text(text, reply_markup=reply_markup)
-    except Exception:
-        pass # To prevent flood if content is identical
+    elif data == "action:close":
+        return await callback_query.message.delete()
+
+    # --- UI RE-RENDER REFRESHER ---
+    # Refresh logic taaki switches click hone ke baad admin usi page par rahe
+    if "first_verify" in data or "vtime" in data:
+        await callback_query.message.edit_text("🥇 **FIRST TOKEN VERIFICATION SETTINGS:**", reply_markup=await get_first_verify_panel())
+    elif "premium" in data:
+        msg_text = settings.get("premium_message", "PREMIUM PLAN DETAILS NOT DEFINED.")
+        await callback_query.message.edit_text(f"👑 **PREMIUM PLAN:**\n\n`{msg_text}`", reply_markup=await get_premium_panel())
