@@ -1,5 +1,5 @@
 # Don't Remove Credit @CodeFlix_Bots, @rohit_1888
-# Premium Inline Settings Plugin (Fix: Resolved Button Unresponsiveness)
+# Premium Inline Settings Plugin (Priority Fixed)
 
 import asyncio
 from pyrogram import Client, filters
@@ -10,10 +10,9 @@ from database.db_premium import add_premium, remove_premium, collection
 from pytz import timezone
 from datetime import datetime
 
-# Active configuration state tracking dictionary
 user_states = {}
 
-# --- HELPER: Human Readable Time Converter ---
+# --- HELPER FUNCTIONS ---
 def seconds_to_readable(seconds):
     if seconds >= 3600:
         return f"{seconds // 3600}h"
@@ -26,7 +25,6 @@ def readable_to_seconds(time_str):
     return value * 60
 
 # --- KEYBOARD BUILDERS ---
-
 async def get_main_settings_keyboard():
     bot_cfg = await db.get_bot_settings()
     verify_status = "🟢 ON" if bot_cfg.get('is_verify_on', True) else "🔴 OFF"
@@ -64,9 +62,8 @@ def get_premium_menu_keyboard():
         [InlineKeyboardButton("◀️ BACK", callback_data="go_to_main_settings")]
     ])
 
-# --- /settings COMMAND (OWNER ONLY CHECK) ---
-
-@Client.on_message(filters.command("settings") & filters.private)
+# 🟢 CRITICAL FIX: Added group=-3 to bypass other general message interceptors
+@Client.on_message(filters.command("settings") & filters.private, group=-3)
 async def admin_settings_cmd(client: Client, message: Message):
     user_id = message.from_user.id
     
@@ -85,7 +82,6 @@ async def admin_settings_cmd(client: Client, message: Message):
     await message.reply_text(text=text, reply_markup=markup)
 
 # --- CALLBACK CONTROLLERS ---
-
 @Client.on_callback_query(filters.regex(r"^(menu_|go_to_|token_|prem_|close_settings_menu)"))
 async def settings_callback_router(client: Client, query: CallbackQuery):
     user_id = query.from_user.id
@@ -104,33 +100,26 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
         await query.message.delete()
         return
 
-    # 🛠️ FIX: Edit karne ke bajay purane message ko delete karke naya message bhejenge taaki entities crash na ho
     elif data in ["menu_main_settings", "go_to_main_settings"]:
         user_states.pop(user_id, None)
         text = "**✨ VENOM FILE STORE SETTINGS ✨**\n\nCustomize your bot internal modules directly using inline options given below."
         markup = await get_main_settings_keyboard()
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text, reply_markup=markup)
 
     elif data == "menu_token_verify":
         text = "**🛠️ TOKEN VERIFICATION PANEL**\n\nConfigure your shortener domain, API keys, and expiration limits safely from this window."
         markup = await get_token_verify_keyboard()
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text, reply_markup=markup)
 
     elif data == "menu_premium":
         text = "**💎 PREMIUM SUBSCRIPTION MANAGEMENT**\n\nAdd/Remove users from the database or check active premium subscriptions from here."
         markup = get_premium_menu_keyboard()
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text, reply_markup=markup)
 
     elif data == "token_toggle_status":
@@ -139,10 +128,8 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
         await db.update_bot_setting('is_verify_on', not current_status)
         
         markup = await get_token_verify_keyboard()
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(
             text="**🛠️ TOKEN VERIFICATION PANEL**\n\nConfigure your shortener domain, API keys, and expiration limits safely from this window.",
             reply_markup=markup
@@ -158,10 +145,8 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
             "✅ `vjlink.online` (Correct)\n\n"
             "Type `/cancel` to abort this configuration."
         )
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text)
 
     elif data == "token_set_api":
@@ -171,10 +156,8 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
             "Paste your developer API key obtained from your shortener website dashboard.\n\n"
             "Type `/cancel` to abort this configuration."
         )
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text)
 
     elif data == "token_set_time":
@@ -185,13 +168,9 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
             "**Examples:** `1h` (1 hour), `15m` (15 minutes), `24h` (24 hours).\n------------\n"
             "Type `/cancel` to abort this configuration."
         )
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text)
-
-    # --- PREMIUM SUB-MENU BUTTON ACTIONS ---
 
     elif data == "prem_add_user":
         user_states[user_id] = "WAITING_FOR_PREMIUM_ADD"
@@ -203,10 +182,8 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
             "📝 **Example:** `123456789 1 hours`\n\n"
             "Type `/cancel` to abort this configuration."
         )
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text)
 
     elif data == "prem_rem_user":
@@ -216,10 +193,8 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
             "Please send the target **User ID** that you want to remove from premium list.\n\n"
             "Type `/cancel` to abort this configuration."
         )
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=text)
 
     elif data == "prem_total_users":
@@ -267,14 +242,11 @@ async def settings_callback_router(client: Client, query: CallbackQuery):
             final_text = "\n".join(premium_user_list)
 
         back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("◀️ BACK", callback_data="menu_premium")]])
-        try:
-            await query.message.delete()
-        except:
-            pass
+        try: await query.message.delete()
+        except: pass
         await query.message.reply_text(text=final_text, reply_markup=back_markup)
 
 # --- CONVERSATION TEXT INPUT HANDLER ---
-
 @Client.on_message(filters.private & filters.incoming, group=-2)
 async def settings_input_interceptor(client: Client, message: Message):
     user_id = message.from_user.id
@@ -298,7 +270,6 @@ async def settings_input_interceptor(client: Client, message: Message):
         await message.reply_text("**✨ VENOM FILE STORE SETTINGS ✨**", reply_markup=markup)
         return
 
-    # --- SHORTNER INPUT PROCESSING ---
     if state == "WAITING_FOR_SHORTLINK":
         if text.startswith("http://") or text.startswith("https://"):
             await message.reply("⚠️ **Format Violation! Do not include protocol tags (`https://`). Just send domain rule (e.g., `vjlink.online`).**")
@@ -327,7 +298,6 @@ async def settings_input_interceptor(client: Client, message: Message):
         markup = await get_main_settings_keyboard()
         await message.reply_text("**✨ VENOM FILE STORE SETTINGS ✨**", reply_markup=markup)
 
-    # --- PREMIUM INPUT PROCESSING ---
     elif state == "WAITING_FOR_PREMIUM_ADD":
         parts = text.split()
         if len(parts) != 3:
