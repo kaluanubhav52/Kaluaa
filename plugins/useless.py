@@ -15,7 +15,7 @@ import os
 import random
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode, ChatAction
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, ChatInviteLink, ChatPrivileges
@@ -28,14 +28,23 @@ from database.database import *
 
 #=====================================================================================##
 
+  # <--- Make sure timezone import hai upar
+
 @Bot.on_message(filters.command('stats') & admin)
 async def stats(bot: Bot, message: Message):
     try:
-        # Calculate uptime
-        now = datetime.now()
-        delta = now - bot.uptime
+        # Calculate uptime using UTC aware datetime to fix offset error
+        now = datetime.now(timezone.utc)
         
-        # Simple self-contained time formatter (helper_func par depend nahi karega)
+        # Agar bot.uptime naive hai, toh use aware banayenge, nahi toh direct minus karenge
+        if bot.uptime.tzinfo is None:
+            uptime_bot = bot.uptime.replace(tzinfo=timezone.utc)
+        else:
+            uptime_bot = bot.uptime
+            
+        delta = now - uptime_bot
+        
+        # Simple self-contained time formatter
         seconds = int(delta.total_seconds())
         days, remainder = divmod(seconds, 86400)
         hours, remainder = divmod(remainder, 3600)
@@ -51,7 +60,7 @@ async def stats(bot: Bot, message: Message):
         users = await db.full_userbase()
         total_users = len(users) if users else 0
 
-        # Custom defined text format (BOT_STATS_TEXT par depend nahi karega)
+        # Custom stats layout
         stats_text = (
             "📊 **📊 BOT STATUS & STATS 📊**\n\n"
             f"⏱️ **Uptime:** `{uptime_string}`\n"
@@ -64,9 +73,7 @@ async def stats(bot: Bot, message: Message):
         await message.reply(stats_text)
         
     except Exception as e:
-        # Agar phir bhi koi error aaye toh admin ko chat me pata chal jaye
-        await message.reply(f"❌ **Error while fetching stats:**\n`{str(e)}`")
-
+        await message.reply(f"❌ **Error while fetching stats:**\n`{str(e)}`
 #=====================================================================================##
 
 #=====================================================================================##
