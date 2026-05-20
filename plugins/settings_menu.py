@@ -4,7 +4,7 @@
 import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from config import admin  # Sirf admin check ke liye
+from config import OWNER_ID  # Sirf admin check ke liye
 from database.database import db
 
 # Active configuration state tracking dictionary
@@ -55,7 +55,7 @@ async def get_token_verify_keyboard():
 
 # --- /settings COMMAND ---
 
-@Client.on_message(filters.command("settings") & filters.private & admin)
+@Client.on_message(filters.command("settings") & filters.private & OWNER_ID)
 async def admin_settings_cmd(client: Client, message: Message):
     text = (
         "**✨ VENOM FILE STORE SETTINGS ✨**\n\n"
