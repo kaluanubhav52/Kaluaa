@@ -249,11 +249,11 @@ async def start_command(client: Client, message: Message):
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
-                ]
+                ],[
+                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs ⚙️", callback_data="layer:main")]
             ]
         )
-        if user_id in OWNER_ID:
-            buttons.append([InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs ⚙️", callback_data="layer:main")])
+    
         await message.reply_photo(
             photo=START_PIC,
             caption=START_MSG.format(
