@@ -43,11 +43,9 @@ async def start_command(client: Client, message: Message):
     id = message.from_user.id
     is_premium = await is_premium_user(id)
     try:
-        if REACTIONS and isinstance(REACTIONS, list):
-            random_emoji = random.choice(REACTIONS)
-            await message.react(emoji=random_emoji)
-    except Exception as e:
-        print(f"Reaction Error: {e}")
+        await message.react(emoji=random.choice(REACTIONS), big=True)
+    except:
+        pass
 
     # Add user if not already present
     if not await db.present_user(user_id):
