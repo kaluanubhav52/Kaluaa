@@ -5,6 +5,20 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from database.database import *
 from config import*
+
+
+
+@Client.on_message(filters.command("^settings$") & filters.private)
+async def open_settings_hub(client: Client, message: Message):
+    if not await db.admin_exist(message.from_user.id):
+        return
+        
+    text = (
+        "⚙️ **SETTINGS:**\n\n"
+        "CUSTOMIZE YOUR SETTINGS AS PER YOUR NEED."
+    )
+    await message.reply_text(text, reply_markup=await get_main_panel())
+    
 # ══════════════════════════════════════════════════
 #              DYNAMIC KEYBOARDS GENERATOR          
 # ══════════════════════════════════════════════════
