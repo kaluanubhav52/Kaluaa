@@ -30,6 +30,8 @@ from helper_func import *
 from database.database import *
 from database.db_premium import *
 from pytz import timezone
+from settings import*
+
 
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
@@ -250,7 +252,7 @@ async def start_command(client: Client, message: Message):
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
                 ],[
-                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs ⚙️", callback_data="layer:main")]
+                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs ⚙️", callback_data="settings")]
             ]
         )
     
