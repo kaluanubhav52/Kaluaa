@@ -30,7 +30,7 @@ from helper_func import *
 from database.database import *
 from database.db_premium import *
 from pytz import timezone
-from settings import*
+
 
 
 BAN_SUPPORT = f"{BAN_SUPPORT}"
