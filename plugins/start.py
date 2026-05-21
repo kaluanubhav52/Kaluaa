@@ -31,8 +31,6 @@ from database.database import *
 from database.db_premium import *
 from pytz import timezone
 
-
-
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
 
@@ -251,11 +249,9 @@ async def start_command(client: Client, message: Message):
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
-                ],[
-                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs ⚙️", callback_data="settings")]
+                ]
             ]
         )
-    
         await message.reply_photo(
             photo=START_PIC,
             caption=START_MSG.format(
