@@ -21,16 +21,6 @@ default_verify = {
     'link': ""
 }
 
-# Default Global Bot Settings Settings Matrix
-DEFAULT_SETTINGS = {
-    '_id': 'BOT_SETTINGS',
-    'start_photo': None,        # File ID store hogi
-    'verification': False,      # True / False
-    'token_time': '24 Hours',   # Default time
-    'premium_mode': False,      # Premium functionality toggler
-    'active_plan_type': 'Free'  # Default Plan Tier
-}
-
 def new_user(id):
     return {
         '_id': id,
@@ -58,27 +48,7 @@ class Rohit:
         self.fsub_data = self.database['fsub']   
         self.rqst_fsub_data = self.database['request_forcesub']
         self.rqst_fsub_Channel_data = self.database['request_forcesub_channel']
-        # Naya Collection dynamic settings panels aur layers ke liye
-        self.settings_data = self.database['bot_settings']
-
-
-    # ==================== DYNAMIC BOT SETTINGS & MULTI-LAYER PLANS ====================
-
-    async def get_bot_settings(self):
-        """Database se current global configurations nikalne ke liye"""
-        settings = await self.settings_data.find_one({'_id': 'BOT_SETTINGS'})
-        if not settings:
-            await self.settings_data.insert_one(DEFAULT_SETTINGS)
-            return DEFAULT_SETTINGS
-        return settings
-
-    async def update_bot_setting(self, key: str, value):
-        """Kisi bhi setting field ko dynamic update karne ke liye (Toggles, Photos, Plans)"""
-        await self.settings_data.update_one(
-            {'_id': 'BOT_SETTINGS'},
-            {'$set': {key: value}},
-            upsert=True
-        )
+        
 
 
     # USER DATA
@@ -142,6 +112,7 @@ class Rohit:
         return user_ids
 
 
+
     # AUTO DELETE TIMER SETTINGS
     async def set_del_timer(self, value: int):        
         existing = await self.del_timer_data.find_one({})
@@ -178,7 +149,7 @@ class Rohit:
         return channel_ids
 
     
-    # Get current mode of a channel
+# Get current mode of a channel
     async def get_channel_mode(self, channel_id: int):
         data = await self.fsub_data.find_one({'_id': channel_id})
         return data.get("mode", "off") if data else "off"
@@ -191,9 +162,9 @@ class Rohit:
             upsert=True
         )
 
-
     # REQUEST FORCE-SUB MANAGEMENT
 
+    # Add the user to the set of users for a   specific channel
     async def req_user(self, channel_id: int, user_id: int):
         try:
             await self.rqst_fsub_Channel_data.update_one(
@@ -204,12 +175,16 @@ class Rohit:
         except Exception as e:
             print(f"[DB ERROR] Failed to add user to request list: {e}")
 
+
+    # Method 2: Remove a user from the channel set
     async def del_req_user(self, channel_id: int, user_id: int):
+        # Remove the user from the set of users for the channel
         await self.rqst_fsub_Channel_data.update_one(
             {'_id': channel_id}, 
             {'$pull': {'user_ids': user_id}}
         )
 
+    # Check if the user exists in the set of the channel's users
     async def req_user_exist(self, channel_id: int, user_id: int):
         try:
             found = await self.rqst_fsub_Channel_data.find_one({
@@ -221,12 +196,21 @@ class Rohit:
             print(f"[DB ERROR] Failed to check request list: {e}")
             return False  
 
+
+    # Method to check if a channel exists using show_channels
     async def reqChannel_exist(self, channel_id: int):
+    # Get the list of all channel IDs from the database
         channel_ids = await self.show_channels()
+        #print(f"All channel IDs in the database: {channel_ids}")
+
+    # Check if the given channel_id is in the list of channel IDs
         if channel_id in channel_ids:
+            #print(f"Channel {channel_id} found in the database.")
             return True
         else:
+            #print(f"Channel {channel_id} NOT found in the database.")
             return False
+
 
 
     # VERIFICATION MANAGEMENT
@@ -251,21 +235,25 @@ class Rohit:
         current['link'] = link
         await self.db_update_verify_status(user_id, current)
 
+    # Set verify count (overwrite with new value)
     async def set_verify_count(self, user_id: int, count: int):
         await self.sex_data.update_one({'_id': user_id}, {'$set': {'verify_count': count}}, upsert=True)
 
+    # Get verify count (default to 0 if not found)
     async def get_verify_count(self, user_id: int):
         user = await self.sex_data.find_one({'_id': user_id})
         if user:
             return user.get('verify_count', 0)
         return 0
 
+    # Reset all users' verify counts to 0
     async def reset_all_verify_counts(self):
         await self.sex_data.update_many(
             {},
             {'$set': {'verify_count': 0}} 
         )
 
+    # Get total verify count across all users
     async def get_total_verify_count(self):
         pipeline = [
             {"$group": {"_id": None, "total": {"$sum": "$verify_count"}}}
