@@ -42,6 +42,12 @@ async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
     id = message.from_user.id
     is_premium = await is_premium_user(id)
+    try:
+        if REACTIONS and isinstance(REACTIONS, list):
+            random_emoji = random.choice(REACTIONS)
+            await message.react(emoji=random_emoji)
+    except Exception as e:
+        print(f"Reaction Error: {e}")
 
     # Add user if not already present
     if not await db.present_user(user_id):
@@ -50,6 +56,7 @@ async def start_command(client: Client, message: Message):
         except:
             pass
 
+    
     # ✅ Check Force Subscription
     if not await is_subscribed(client, user_id):
         return await not_joined(client, message)
