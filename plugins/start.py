@@ -246,6 +246,13 @@ async def start_command(client: Client, message: Message):
             except Exception as e:
                 print(f"Error updating notification with 'Get File Again' button: {e}")
     else:
+        try:
+            sticker_msg = await message.reply_sticker(sticker=START_STICKER)
+            await asyncio.sleep(0.4)
+            await sticker_msg.delete()
+        except Exception as e:
+            print(f"Sticker Loading Error: {e}")
+            pass  
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", callback_data='channels' , style=enums.ButtonStyle.PRIMARY)],
