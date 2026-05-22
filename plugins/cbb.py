@@ -46,12 +46,25 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             link_preview_options=enums.LinkPreviewOptions(is_disabled=True),
             reply_markup=InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟꜱ •", url="https://t.me/freestoryhubMR",style=enums.ButtonStyle.PRIMARY)
+                    InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟꜱ •", callback_data='channels' ,style=enums.ButtonStyle.PRIMARY)
                 ],
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ •", callback_data='about'),
                     InlineKeyboardButton("• ʜᴇʟᴘ •", callback_data='help')
                 ]
+            ])
+        )
+
+    elif data == "channels":
+        await query.message.edit_text(
+            text=CHANNELS_TXT.format(first=query.from_user.first_name),
+            link_preview_options=enums.LinkPreviewOptions(is_disabled=True),
+            reply_markup=InlineKeyboardMarkup([
+                InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟꜱ •", url="https://t.me/freestoryhubMR",style=enums.ButtonStyle.PRIMARY)
+            ],[
+                InlineKeyboardButton("• ReQeST GrOuP •", url="https://t.me/pratilipifm0900",style=enums.ButtonStyle.PRIMARY)
+                [InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='start'),
+                 InlineKeyboardButton('ᴄʟᴏꜱᴇ', callback_data='close', style=enums.ButtonStyle.DANGER)]
             ])
         )
 
