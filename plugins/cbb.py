@@ -60,13 +60,22 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             text=CHANNELS_TXT.format(first=query.from_user.first_name),
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup([
-                InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟꜱ •", url="https://t.me/freestoryhubMR",style=enums.ButtonStyle.PRIMARY)
-            ],[
-                InlineKeyboardButton("• ReQeST GrOuP •", url="https://t.me/pratilipifm0900",style=enums.ButtonStyle.PRIMARY)
-                [InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='start'),
-                 InlineKeyboardButton('ᴄʟᴏꜱᴇ', callback_data='close', style=enums.ButtonStyle.DANGER)]
-            ])
-        )
+            # Row 1
+            [
+                InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟꜱ •", url="https://t.me/freestoryhubMR")
+            ],
+            # Row 2
+            [
+                InlineKeyboardButton("• ReQeST GrOuP •", url="https://t.me/pratilipifm0900")
+            ],
+            # Row 3 (Home aur Close buttons ek sath ek hi line mein)
+            [
+                InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='start'),
+                InlineKeyboardButton('ᴄʟᴏꜱᴇ', callback_data='close')
+            ]
+        ])
+    )
+
 
 
 # Don't Remove Credit @CodeFlix_Bots, @rohit_1888
