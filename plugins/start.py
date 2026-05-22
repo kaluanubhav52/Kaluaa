@@ -39,13 +39,10 @@ cancel_tasks = {}
 
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
-    # ✅ Improved Reaction Handler with Logs
     try:
-        chosen_emoji = random.choice(REACTIONS)
-        await message.react(emoji=chosen_emoji, big=True)
-    except Exception as e:
-        print(f"⚠️ Reaction Error: {e}") # Isse console me error print hoga agar reaction fail hua to
-        
+        await message.react(emoji=random.choice(REACTIONS), big=True)
+    except:
+        pass
     user_id = message.from_user.id
     is_premium = await is_premium_user(user_id)
 
