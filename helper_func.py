@@ -156,7 +156,7 @@ async def get_messages(client, message_ids):
     return messages
 
 async def get_message_id(client, message):
-    ifmessage.forward_origin.chat:
+    if message.forward_origin.chat:
         if message.forward_origin.chat.id == client.db_channel.id:
             return message.forward_origin.message_id
         else:
