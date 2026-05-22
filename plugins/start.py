@@ -41,7 +41,8 @@ cancel_tasks = {}
 async def start_command(client: Client, message: Message):
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
-    except:
+    except Exception:
+        await message.react(emoji="⚡️")
         pass
     user_id = message.from_user.id
     is_premium = await is_premium_user(user_id)
