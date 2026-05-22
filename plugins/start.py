@@ -248,10 +248,10 @@ async def start_command(client: Client, message: Message):
     else:
         reply_markup = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("• <b>ᴄʜᴀɴɴᴇʟs</b> •", url="https://t.me/freestoryhubMR", style=enums.ButtonStyle.PRIMARY)],
+                [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", callback_data='channels' , style=enums.ButtonStyle.PRIMARY)],
                 [
-                    InlineKeyboardButton("• <b>ᴀʙᴏᴜᴛ</b>", callback_data = "about"),
-                    InlineKeyboardButton("<b>ʜᴇʟᴘ</b> •", callback_data = "help")
+                    InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
+                    InlineKeyboardButton("• ʜᴇʟᴘ •", callback_data = "help")
                 ]
             ]
         )
