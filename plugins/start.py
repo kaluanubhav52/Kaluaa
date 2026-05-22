@@ -269,7 +269,8 @@ async def start_command(client: Client, message: Message):
                 last=message.from_user.last_name,
                 username=None if not message.from_user.username else '@' + message.from_user.username,
                 mention=message.from_user.mention,
-                id=message.from_user.id
+                id=message.from_user.id,
+                effect_id=int(random.choice(EFFECT_IDS))
             ),
             reply_markup=reply_markup
         ) 
