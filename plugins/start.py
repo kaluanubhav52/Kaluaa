@@ -39,13 +39,14 @@ cancel_tasks = {}
 
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
-    user_id = message.from_user.id
-    id = message.from_user.id
-    is_premium = await is_premium_user(id)
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
     except:
         pass
+        
+    user_id = message.from_user.id
+    id = message.from_user.id
+    is_premium = await is_premium_user(id)
 
     # Add user if not already present
     if not await db.present_user(user_id):
@@ -157,9 +158,9 @@ async def start_command(client: Client, message: Message):
         # Beautiful custom layout containing the update channel and cancellation key
         wait_markup = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("📢 Update Channel", url="https://t.me/HDFILM0900_BOT", style=enums.ButtonStyle.PRIMARY)
+                InlineKeyboardButton("ᗪᗴᐯᗴᒪOᑭᗴᖇ🛠️", url="https://t.me/HDFILM0900_BOT", style=enums.ButtonStyle.PRIMARY)
             ],[
-                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_delivery_{user_id}", style=enums.ButtonStyle.DANGER)
+                InlineKeyboardButton("❌ Cancel🌀", callback_data=f"cancel_delivery_{user_id}", style=enums.ButtonStyle.DANGER)
             ]
         ])
         temp_msg = await message.reply("<b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**</b>", reply_markup=wait_markup)
