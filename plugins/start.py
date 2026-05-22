@@ -44,9 +44,12 @@ async def start_command(client: Client, message: Message):
     except Exception:
         await message.react(emoji="⚡️")
         pass
+    
+    
     user_id = message.from_user.id
-    is_premium = await is_premium_user(user_id)
-
+    id = message.from_user.id
+    is_premium = await is_premium_user(id)
+    
     # Add user if not already present
     if not await db.present_user(user_id):
         try:
