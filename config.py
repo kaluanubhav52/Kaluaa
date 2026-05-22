@@ -37,6 +37,7 @@ TUT_VID = os.environ.get("TUT_VID","https://t.me/howanubhav/14")
 
 REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"] 
 
+EFFECT_IDS = [effect for effect in environ.get('EFFECT_IDS', '5104841245755180586 5104858069142078462 5159385139981059251 5046509860389126442 5046589136895476101 5107584321108051014').split()]
 
 START_STICKER = "CAACAgUAAxkBAAIPjGoQOq68O2jLKuu7BQSqMmkDYi7jAALWCgACgCqoVbpYfx3qNQlCHgQ"  
 
