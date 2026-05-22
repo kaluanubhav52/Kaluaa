@@ -160,12 +160,12 @@ async def start_command(client: Client, message: Message):
         # Beautiful custom layout containing the update channel and cancellation key
         wait_markup = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("ᗪᗴᐯᗴᒪOᑭᗴᖇ🛠️", url="https://t.me/HDFILM0900_BOT", style=enums.ButtonStyle.PRIMARY)
+                InlineKeyboardButton("𝙳𝙴𝚅𝙴𝙻𝙾𝙿𝙴𝚁🛠️", url="https://t.me/HDFILM0900_BOT", style=enums.ButtonStyle.PRIMARY)
             ],[
-                InlineKeyboardButton("❌ Cancel🌀", callback_data=f"cancel_delivery_{user_id}", style=enums.ButtonStyle.DANGER)
+                InlineKeyboardButton("🌀 𝙲𝙰𝙽𝙲𝙴𝙻 🌀", callback_data=f"cancel_delivery_{user_id}", style=enums.ButtonStyle.DANGER)
             ]
         ])
-        temp_msg = await message.reply("<b>**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**</b>", reply_markup=wait_markup)
+        temp_msg = await message.reply("<b>🔺ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ</b>", reply_markup=wait_markup)
         
         try:
             messages = await get_messages(client, ids)
@@ -207,7 +207,7 @@ async def start_command(client: Client, message: Message):
                 pass
 
             # ⏱️ Smooth Asynchronous Delivery Intermission (1.5 seconds)
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(1)
 
         # Retrieve structural cancellation flag and clear state cache
         was_cancelled = cancel_tasks.pop(user_id, False)
