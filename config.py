@@ -47,7 +47,7 @@ TUT_VID = os.environ.get("TUT_VID","https://t.me/howanubhav/14")
 
 #--------------------------------------------
 REACTIONS = [
-    "🍔",  # Burger
+    "😘",  # Burger
     "🥪",  # Sandwich
     "🥤",  # Cup with Straw (Pepsi / Soda / Soft Drink)
     "🍕",  # Pizza
@@ -56,7 +56,10 @@ REACTIONS = [
     "🍩",  # Donut
     "🍦",  # Soft Ice Cream
     "🍺",  # Beer Mug
-    "☕"   # Hot Beverage / Coffee
+    "☕",  # Hot Beverage / Coffee
+    "🤣",
+    "😱",
+    "😎"
 ]
 #--------------------------------------------
 HELP_TXT = "<b><blockquote>ᴛʜɪs ɪs ᴀɴ ғɪʟᴇ ᴛᴏ ʟɪɴᴋ ʙᴏᴛ ᴡᴏʀᴋ ғᴏʀ @HDFILM0900_BOT\n\n❏ ʙᴏᴛ ᴄᴏᴍᴍᴀɴᴅs\n├/start : sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ\n├/about : ᴏᴜʀ Iɴғᴏʀᴍᴀᴛɪᴏɴ\n└/help : ʜᴇʟᴘ ʀᴇʟᴀᴛᴇᴅ ʙᴏᴛ\n\n sɪᴍᴘʟʏ ᴄʟɪᴄᴋ ᴏɴ ʟɪɴᴋ ᴀɴᴅ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴊᴏɪɴ ʙᴏᴛʜ ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ ᴛʜᴀᴛs ɪᴛ.....!\n\n ᴅᴇᴠᴇʟᴏᴘᴇᴅ ʙʏ <a href=https://t.me/HDFILM0900_BOT>╰‿╯ ＫＡ ＬＵ u ꔪ</a></blockquote></b>"
