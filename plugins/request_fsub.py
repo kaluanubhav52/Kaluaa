@@ -150,7 +150,7 @@ async def add_force_sub(client: Client, message: Message):
             f"✅ Added Successfully!\n\n"
             f"<b>Name:</b> <a href='{link}'>{chat.title}</a>\n"
             f"<b>ID:</b> <code>{chat_id}</code>",
-            disable_web_page_preview=True
+            link_preview_options=enums.LinkPreviewOptions(is_disabled=True)
         )
 
     except Exception as e:
