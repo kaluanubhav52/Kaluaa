@@ -20,7 +20,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
     if data == "help":
         await query.message.edit_text(
             text=HELP_TXT.format(first=query.from_user.first_name),
-            disable_web_page_preview=True,
+            link_preview_options=enums.LinkPreviewOptions(is_disabled=True),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='start'),
                  InlineKeyboardButton("ᴄʟᴏꜱᴇ", callback_data='close')]
@@ -30,7 +30,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
     elif data == "about":
         await query.message.edit_text(
             text=ABOUT_TXT.format(first=query.from_user.first_name),
-            disable_web_page_preview=True,
+            link_preview_options=enums.LinkPreviewOptions(is_disabled=True),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='start'),
                  InlineKeyboardButton('ᴄʟᴏꜱᴇ', callback_data='close')]
@@ -43,7 +43,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
                 last=query.from_user.last_name or "",
                 mention=query.from_user.mention,
                 id=query.from_user.id),
-            disable_web_page_preview=True,
+            link_preview_options=enums.LinkPreviewOptions(is_disabled=True),
             reply_markup=InlineKeyboardMarkup([
                 [
                     InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟꜱ •", url="https://t.me/freestoryhubMR",style=enums.ButtonStyle.PRIMARY)
