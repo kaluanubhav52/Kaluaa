@@ -42,7 +42,7 @@ async def start_command(client: Client, message: Message):
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
     except Exception:
-        await message.react(emoji="⚡️")
+        await message.react(emoji="⚡️", big=True)
         pass
     
     
