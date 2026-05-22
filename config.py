@@ -34,21 +34,9 @@ VERIFY_EXPIRE = int(os.environ.get('VERIFY_EXPIRE', 3600)) # Add time in seconds
 TUT_VID = os.environ.get("TUT_VID","https://t.me/howanubhav/14")
 
 #--------------------------------------------
-REACTIONS = [
-    "😘",  # Burger
-    "🥪",  # Sandwich
-    "🥤",  # Cup with Straw (Pepsi / Soda / Soft Drink)
-    "🍕",  # Pizza
-    "🍟",  # French Fries
-    "🍿",  # Popcorn
-    "🍩",  # Donut
-    "🍦",  # Soft Ice Cream
-    "🍺",  # Beer Mug
-    "☕",  # Hot Beverage / Coffee
-    "🤣",
-    "😱",
-    "😎"
-]
+
+REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"] 
+
 #--------------------------------------------
 HELP_TXT = "<b><blockquote>ᴛʜɪs ɪs ᴀɴ ғɪʟᴇ ᴛᴏ ʟɪɴᴋ ʙᴏᴛ ᴡᴏʀᴋ ғᴏʀ @HDFILM0900_BOT\n\n❏ ʙᴏᴛ ᴄᴏᴍᴍᴀɴᴅs\n├/start : sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ\n├/about : ᴏᴜʀ Iɴғᴏʀᴍᴀᴛɪᴏɴ\n└/help : ʜᴇʟᴘ ʀᴇʟᴀᴛᴇᴅ ʙᴏᴛ\n\n sɪᴍᴘʟʏ ᴄʟɪᴄᴋ ᴏɴ ʟɪɴᴋ ᴀɴᴅ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴊᴏɪɴ ʙᴏᴛʜ ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ ᴛʜᴀᴛs ɪᴛ.....!\n\n ᴅᴇᴠᴇʟᴏᴘᴇᴅ ʙʏ <a href=https://t.me/HDFILM0900_BOT>╰‿╯ ＫＡ ＬＵ u ꔪ</a></blockquote></b>"
 ABOUT_TXT = "<b><blockquote>◈ ᴄʀᴇᴀᴛᴏʀ: <a href=https://t.me/hdfilm0900_bot>╰‿╯ ＫＡ ＬＵ u</a>\n‣ʟɪʙʀᴀʀʏ : ᴘʏʀᴏɢʀᴀᴍ\n‣ ʟᴀɴɢᴜᴀɢᴇ : ᴘʏᴛʜᴏɴ3\n‣ ᴅᴀᴛᴀ ʙᴀsᴇ : ᴍᴏɴɢᴏ ᴅʙ\n‣ ʜᴏsᴛᴇᴅ ᴏɴ  : ʜᴇʀᴏᴋᴜ\n‣ ʙᴜɪʟᴅ sᴛᴀᴛᴜs : ᴠ10+ᵖʳᵒ  [𝙰𝙳𝚅𝙰𝙽𝙲𝙴]</blockquote></b>"
