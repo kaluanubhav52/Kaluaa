@@ -10,7 +10,7 @@
 from pyrogram import Client 
 from bot import Bot
 from config import *
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LinkPreviewOptions
 from database.database import *
 from pyrogram import enums
 @Bot.on_callback_query()
