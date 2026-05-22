@@ -16,7 +16,7 @@ import sys
 import time
 from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode, ChatAction, ChatMemberStatus, ChatType
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, ChatMemberUpdated, ChatPermissions, LinkPreviewOptions
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, ChatMemberUpdated, ChatPermissions
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, InviteHashEmpty, ChatAdminRequired, PeerIdInvalid, UserIsBlocked, InputUserDeactivated, UserNotParticipant
 from bot import Bot
 from config import *
@@ -150,7 +150,7 @@ async def add_force_sub(client: Client, message: Message):
             f"✅ Added Successfully!\n\n"
             f"<b>Name:</b> <a href='{link}'>{chat.title}</a>\n"
             f"<b>ID:</b> <code>{chat_id}</code>",
-            link_preview_options=enums.LinkPreviewOptions(is_disabled=True)
+            disable_web_page_preview=True
         )
 
     except Exception as e:
