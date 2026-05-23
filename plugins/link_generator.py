@@ -1,6 +1,5 @@
 #(©)Codexbotz
 
-import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot import Bot
@@ -81,11 +80,6 @@ async def custom_batch(client: Client, message: Message):
 
         if user_msg.text and user_msg.text.strip().upper() == "STOP":
             break
-
-        # 🛠️ EMPTY / SERVICE MESSAGE FILTER ADDED HERE 🛠️
-        if user_msg.service or (not user_msg.text and not user_msg.media):
-            await message.reply("⚠️ **This message is empty or invalid. Skipping...**")
-            continue
 
         try:
             sent = await user_msg.copy(client.db_channel.id, disable_notification=True)
