@@ -18,6 +18,8 @@ from helper_func import *
 from database.database import *
 from database.db_premium import *
 from pytz import timezone
+# Agar dono file ek hi 'plugins' folder me hain:
+from .admin_settings import settings_handler
 
 
 BAN_SUPPORT = f"{BAN_SUPPORT}"
