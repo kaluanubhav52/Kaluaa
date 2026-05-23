@@ -4,6 +4,11 @@ from database.database import *
 from config import *
 from bot import Bot
 
+
+# Dynamic State Storage (Memory tracking)
+ASK_TIME, ASK_URL, ASK_API = 101, 102, 103
+admin_states = {}
+
 # Admin Validation Filter
 def admin_filter(_, __, message: Message):
     try:
@@ -14,7 +19,7 @@ def admin_filter(_, __, message: Message):
 is_admin = filters.create(admin_filter)
 
 # ⚙️ 1. Main Dashboard Command
-@Bot.on_message(filters.command("settings") & filters.private & is_admin, group=-1)
+@Bot.on_message(filters.command("settings") & filters.private & is_admin, group=-5)
 async def settings_panel(client: Client, message: Message):
     settings = await db.get_bot_settings()
     v_mode = "🟢 ENABLED" if settings.get("verify_mode", True) else "🔴 DISABLED"
@@ -32,12 +37,23 @@ async def settings_panel(client: Client, message: Message):
         reply_markup=InlineKeyboardMarkup(btn)
     )
 
-# 📊 2. Callbacks Handle karne ke liye
+# ❌ 2. Cancel Command (Agar input state cancel karni ho)
+@Bot.on_message(filters.command("cancel") & filters.private & is_admin, group=-10)
+async def cancel_input(client: Client, message: Message):
+    user_id = message.from_user.id
+    if user_id in admin_states:
+        del admin_states[user_id]
+        await message.reply_text("❌ **Setting process ko cancel kar diya gaya hai.** Ab aap normal use kar sakte hain.")
+        message.stop_propagation()
+    else:
+        await message.reply_text("Pehle se koi setting change process active nahi hai.")
+
+# 📊 3. Callbacks Handle karne ke liye
 @Bot.on_callback_query(filters.regex(r"^(toggle_verify|set_url|set_api|set_time|close_settings|admin_settings_menu)$"))
 async def handle_settings_callbacks(client: Client, query: CallbackQuery):
     data = query.data
+    user_id = query.from_user.id
     
-    # Security Check for start button
     if data == "admin_settings_menu":
         if query.from_user.id != int(OWNER_ID) and query.from_user.id != 5898522531:
             await query.answer("⚠️ Ghabraiye nahi! Yeh panel sirf Bot Admin ke liye hai.", show_alert=True)
@@ -79,24 +95,27 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         ]
         await query.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
 
-    # 🔥 FORCE REPLY SOLUTIONS: Ab ye buttons input box me reply select kar denge automatic
+    # Yahan hum states store kar rahe hain memory me strict handling ke liye
     elif data == "set_url":
+        admin_states[user_id] = ASK_URL
         await query.message.reply_text(
-            "📝 **Sᴇᴛ Sʜᴏʀᴛᴇɴᴇʀ URL:**\n\nIs message ka reply karte hue apna domain name bhejein.\nExample: `linkshortify.com`",
+            "📝 **Sᴇᴛ Sʜᴏʀᴛᴇɴᴇʀ URL:**\n\nNaya domain name bhejein (e.g. `linkshortify.com`).\n\nTo stop this process send: /cancel",
             reply_markup=ForceReply(selective=True)
         )
         await query.answer()
         
     elif data == "set_api":
+        admin_states[user_id] = ASK_API
         await query.message.reply_text(
-            "🔑 **Sᴇᴛ Sʜᴏʀᴛᴇɴᴇʀ API KEY:**\n\nIs message ka reply karte hue apni API Key send karein.",
+            "🔑 **Sᴇᴛ SʜᴏＲᴛᴇɴᴇʀ API KEY:**\n\nApni nayi API Key yahan send karein.\n\nTo stop this process send: /cancel",
             reply_markup=ForceReply(selective=True)
         )
         await query.answer()
         
     elif data == "set_time":
+        admin_states[user_id] = ASK_TIME
         await query.message.reply_text(
-            "⏳ **Sᴇᴛ Tᴏᴋᴇɴ Exᴘɪʀʏ Tɪᴍᴇ:**\n\nIs message ka reply karte hue token validity seconds me bhejein.\nExample: `3600` (1 Ghanta)",
+            "⏳ **Sᴇᴛ TᴏᴋＥɴ Exᴘɪʀʏ Tɪᴍᴇ:**\n\nToken validity seconds me bhejein (e.g. `180`).\n\nTo stop this process send: /cancel",
             reply_markup=ForceReply(selective=True)
         )
         await query.answer()
@@ -105,34 +124,42 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         await query.message.delete()
         await query.answer("Panel Closed.")
 
-# 📥 3. Admin Input Messages Process karne ke liye (Ab ye strictly text ki jagah 'reply_to_message' check karega)
-@Bot.on_message(filters.text & filters.private & is_admin, group=-2)
+# 📥 4. CRITICAL INPUT HANDLER (Group priority set to -100 jisse koi file handler isko touch bhi na kar paye)
+@Bot.on_message(filters.text & filters.private & is_admin, group=-100)
 async def handle_admin_inputs(client: Client, message: Message):
-    # Agar message kisi bot message ka reply nahi hai, toh ignore karo aur baki code chalne do
-    if not message.reply_to_message:
+    user_id = message.from_user.id
+    
+    # Agar state memory me active nahi hai, toh chupchaap baki plugins ko chalne do
+    if user_id not in admin_states:
         return
         
-    reply_text = message.reply_to_message.text
+    state = admin_states[user_id]
     input_text = message.text.strip()
     
-    # Strict dynamic text match jisse koi doosra filter isme tang na adaye
-    if "Sᴇᴛ Sʜᴏʀᴛᴇɴᴇʀ URL:" in reply_text:
+    # Agar user cancel command bhejta hai toh handle karne do normal tarike se
+    if input_text.startswith("/cancel"):
+        return
+
+    if state == ASK_URL:
         clean_url = input_text.replace("https://", "").replace("http://", "").split("/")[0]
         await db.update_bot_settings(shortener_url=clean_url)
         await message.reply_text(f"✅ **Shortener URL successfully updated to:** `{clean_url}`")
-        message.stop_propagation() 
+        del admin_states[user_id] # State cleared
+        message.stop_propagation() # Dusre file saving handlers ko block kar diya hamesha ke liye
         
-    elif "Sᴇᴛ Sʜᴏʀᴛᴇɴᴇʀ API KEY:" in reply_text:
+    elif state == ASK_API:
         await db.update_bot_settings(shortener_api=input_text)
         await message.reply_text(f"✅ **Shortener API Key successfully updated!**")
+        del admin_states[user_id]
         message.stop_propagation()
         
-    elif "Sᴇᴛ Tᴏᴋᴇɴ Exᴘɪʀʏ Tɪᴍᴇ:" in reply_text:
+    elif state == ASK_TIME:
         try:
             seconds = int(input_text)
             await db.update_bot_settings(verify_time=seconds)
             await message.reply_text(f"✅ **Token Expiry Time successfully updated to:** `{seconds}` seconds.")
+            del admin_states[user_id]
             message.stop_propagation()
         except ValueError:
-            await message.reply_text("❌ **Invalid Input!** Kripya sirf ek valid number (seconds me) reply karein:")
+            await message.reply_text("❌ **Invalid Input!** Kripya sirf ek valid number (seconds me) reply karein ya process rokne ke liye `/cancel` likhein:")
             message.stop_propagation()
