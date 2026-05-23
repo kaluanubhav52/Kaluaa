@@ -105,6 +105,32 @@ class Rohit:
         return new_mode
 
 
+        async def get_db_channel(self):
+        """Database se live DB_CHANNEL_ID nikalne ke liye"""
+        data = await self.settings_data.find_one({"_id": "bot_config"})
+        if data and "db_channel_id" in data:
+            try:
+                # Hamesha Integer me convert karke return karein taaki .chat.id error na aaye
+                return int(data.get("db_channel_id"))
+            except (ValueError, TypeError):
+                pass
+        
+        # Fallback: Agar DB me nahi hai toh config.py se static value uthayega
+        try:
+            from config import DB_CHANNEL
+            return int(DB_CHANNEL)
+        except (ImportError, ValueError, TypeError):
+            return None
+
+    async def update_db_channel(self, channel_id: int):
+        """Settings panel se DB_CHANNEL_ID update karne ke liye"""
+        await self.settings_data.update_one(
+            {"_id": "bot_config"},
+            {"$set": {"db_channel_id": int(channel_id)}},
+            upsert=True
+        )
+        
+
     # USER DATA
     async def present_user(self, user_id: int):
         found = await self.user_data.find_one({'_id': user_id})
