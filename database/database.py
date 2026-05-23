@@ -48,19 +48,18 @@ class Rohit:
         self.fsub_data = self.database['fsub']   
         self.rqst_fsub_data = self.database['request_forcesub']
         self.rqst_fsub_Channel_data = self.database['request_forcesub_channel']
-        # Dynamic Settings ke liye naya collection target kiya
+        # Dynamic Settings collection
         self.settings_data = self.database['bot_settings']   
 
 
     # ==========================================
-    # DYNAMIC BOT SETTINGS MANAGEMENT (NEW)
+    # DYNAMIC BOT SETTINGS MANAGEMENT (NEW & FIXED)
     # ==========================================
     
     async def get_bot_settings(self):
         """Database se live shortener aur verify settings nikalne ke liye"""
         data = await self.settings_data.find_one({"_id": "bot_config"})
         if not data:
-            # Agar database khali hai toh config file ke static variables default banenge
             try:
                 from config import DEFAULT_SHORTLINK_URL, DEFAULT_SHORTLINK_API, DEFAULT_VERIFY_EXPIRE
                 return {
@@ -70,7 +69,6 @@ class Rohit:
                     "verify_mode": True
                 }
             except ImportError:
-                # Fallback agar config.py me variables badle na hon to purane waale utha lega
                 from config import SHORTLINK_URL, SHORTLINK_API, VERIFY_EXPIRE
                 return {
                     "verify_time": VERIFY_EXPIRE,
@@ -85,6 +83,22 @@ class Rohit:
             "verify_mode": data.get("verify_mode", True)
         }
 
+    async def get_db_channel(self):
+        """NoneType check ke sath dynamic ya config backup channel ID nikalne ke liye"""
+        data = await self.settings_data.find_one({"_id": "bot_config"})
+        if data and "db_channel_id" in data:
+            try:
+                return int(data.get("db_channel_id"))
+            except (ValueError, TypeError):
+                pass
+        
+        # Fallback backup agar database setting khali mile
+        try:
+            from config import CHANNEL_ID
+            return int(CHANNEL_ID)
+        except (ImportError, ValueError, TypeError):
+            return None
+
     async def update_bot_settings(self, key: str, value):
         """Settings panel se aane wali values ko update karne ke liye"""
         await self.settings_data.update_one(
@@ -94,7 +108,7 @@ class Rohit:
         )
 
     async def toggle_verify_mode(self):
-        """Verification ko bina bot restart kiye ON/OFF (Toggle) karne ke liye"""
+        """Verification ko bina bot restart kiye ON/OFF karne ke liye"""
         settings = await self.get_bot_settings()
         new_mode = not settings["verify_mode"]
         await self.settings_data.update_one(
@@ -104,32 +118,6 @@ class Rohit:
         )
         return new_mode
 
-
-        async def get_db_channel(self):
-        """Database se live DB_CHANNEL_ID nikalne ke liye"""
-        data = await self.settings_data.find_one({"_id": "bot_config"})
-        if data and "db_channel_id" in data:
-            try:
-                # Hamesha Integer me convert karke return karein taaki .chat.id error na aaye
-                return int(data.get("db_channel_id"))
-            except (ValueError, TypeError):
-                pass
-        
-        # Fallback: Agar DB me nahi hai toh config.py se static value uthayega
-        try:
-            from config import DB_CHANNEL
-            return int(DB_CHANNEL)
-        except (ImportError, ValueError, TypeError):
-            return None
-
-    async def update_db_channel(self, channel_id: int):
-        """Settings panel se DB_CHANNEL_ID update karne ke liye"""
-        await self.settings_data.update_one(
-            {"_id": "bot_config"},
-            {"$set": {"db_channel_id": int(channel_id)}},
-            upsert=True
-        )
-        
 
     # USER DATA
     async def present_user(self, user_id: int):
@@ -192,7 +180,6 @@ class Rohit:
         return user_ids
 
 
-
     # AUTO DELETE TIMER SETTINGS
     async def set_del_timer(self, value: int):        
         existing = await self.del_timer_data.find_one({})
@@ -242,9 +229,8 @@ class Rohit:
             upsert=True
         )
 
-    # REQUEST FORCE-SUB MANAGEMENT
 
-    # Add the user to the set of users for a specific channel
+    # REQUEST FORCE-SUB MANAGEMENT
     async def req_user(self, channel_id: int, user_id: int):
         try:
             await self.rqst_fsub_Channel_data.update_one(
@@ -255,16 +241,12 @@ class Rohit:
         except Exception as e:
             print(f"[DB ERROR] Failed to add user to request list: {e}")
 
-
-    # Method 2: Remove a user from the channel set
     async def del_req_user(self, channel_id: int, user_id: int):
-        # Remove the user from the set of users for the channel
         await self.rqst_fsub_Channel_data.update_one(
             {'_id': channel_id}, 
             {'$pull': {'user_ids': user_id}}
         )
 
-    # Check if the user exists in the set of the channel's users
     async def req_user_exist(self, channel_id: int, user_id: int):
         try:
             found = await self.rqst_fsub_Channel_data.find_one({
@@ -276,12 +258,8 @@ class Rohit:
             print(f"[DB ERROR] Failed to check request list: {e}")
             return False  
 
-
-    # Method to check if a channel exists using show_channels
     async def reqChannel_exist(self, channel_id: int):
-        # Get the list of all channel IDs from the database
         channel_ids = await self.show_channels()
-        # Check if the given channel_id is in the list of channel IDs
         if channel_id in channel_ids:
             return True
         else:
@@ -310,25 +288,21 @@ class Rohit:
         current['link'] = link
         await self.db_update_verify_status(user_id, current)
 
-    # Set verify count (overwrite with new value)
     async def set_verify_count(self, user_id: int, count: int):
         await self.sex_data.update_one({'_id': user_id}, {'$set': {'verify_count': count}}, upsert=True)
 
-    # Get verify count (default to 0 if not found)
     async def get_verify_count(self, user_id: int):
         user = await self.sex_data.find_one({'_id': user_id})
         if user:
             return user.get('verify_count', 0)
         return 0
 
-    # Reset all users' verify counts to 0
     async def reset_all_verify_counts(self):
         await self.sex_data.update_many(
             {},
             {'$set': {'verify_count': 0}} 
         )
 
-    # Get total verify count across all users
     async def get_total_verify_count(self):
         pipeline = [
             {"$group": {"_id": None, "total": {"$sum": "$verify_count"}}}
