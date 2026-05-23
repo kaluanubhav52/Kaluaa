@@ -19,6 +19,29 @@ from database.database import *
 from database.db_premium import *
 from pytz import timezone
 
+# ==================== GLOBAL QUOTE=FALSE PATCH ====================
+# Yeh patch Pyrogram ke message methods ko globally force karega 
+# ki wo automatic quote na karein (jab tak aap khud quote=True na likhein).
+
+original_reply = Message.reply
+async def patched_reply(self, *args, **kwargs):
+    kwargs.setdefault('quote', False)
+    return await original_reply(self, *args, **kwargs)
+Message.reply = patched_reply
+
+original_reply_text = Message.reply_text
+async def patched_reply_text(self, *args, **kwargs):
+    kwargs.setdefault('quote', False)
+    return await original_reply_text(self, *args, **kwargs)
+Message.reply_text = patched_reply_text
+
+original_reply_photo = Message.reply_photo
+async def patched_reply_photo(self, *args, **kwargs):
+    kwargs.setdefault('quote', False)
+    return await original_reply_photo(self, *args, **kwargs)
+Message.reply_photo = patched_reply_photo
+# ==================================================================
+
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
 
@@ -82,7 +105,7 @@ async def start_command(client: Client, message: Message):
             if "verify_" in text:
                 _, token = text.split("_", 1)
                 if verify_status['verify_token'] != token:
-                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺ʟɪᴅ 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
+                    return await message.reply("⚠️ 𝖨nv𝖺ʟɪᴅ 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
 
                 # Typing animation lagayein jab token verify ho raha ho
                 await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
@@ -211,7 +234,7 @@ async def start_command(client: Client, message: Message):
 
         if FILE_AUTO_DELETE > 0:
             notification_msg = await message.reply(
-                f"<b>Tʜɪs Fɪʟᴇ ᴡɪʟʟ ʙᴇ Dᴇʟᴇᴛᴇ Deleted ɪɴ  {get_exp_time(FILE_AUTO_DELETE)}. Pʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢES ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs Dᴇʟᴇᴛᴇᴅ.</b>"
+                f"<b>Tʜɪs Fɪʟᴇ ᴡɪʟʟ ʙᴇ Dᴇʟᴇᴛᴇ Deleted ɪɴ  {get_exp_time(FILE_AUTO_DELETE)}. Pʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢES ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs DᴇʟᴇᴛᴇDeleted.</b>"
             )
 
             await asyncio.sleep(FILE_AUTO_DELETE)
@@ -513,4 +536,5 @@ async def total_verify_count_cmd(client, message: Message):
 @Bot.on_message(filters.command('commands') & filters.private & admin)
 async def bcmd(bot: Bot, message: Message):        
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
-    await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
+    # Last command me agar aapko specific kisi wajah se quote=True chahiye tha, to wo waisa hi rahega kyunki patch default ko badalta hai.
+    await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote=True)
