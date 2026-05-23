@@ -254,7 +254,7 @@ async def start_command(client: Client, message: Message):
                 [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", url="https://t.me/freestoryhubMR", style=enums.ButtonStyle.PRIMARY)],
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
-                    InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
+                    InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "admin_settings_menu")
                 ]
             ]
         )
