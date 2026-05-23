@@ -34,7 +34,7 @@ async def keep_animation_alive(client: Client, chat_id: int, action: ChatAction,
         except Exception:
             pass
         try:
-            await asyncio.sleep(3.5)
+            await asyncio.sleep(2.5)
         except asyncio.CancelledError:
             break
 
@@ -138,7 +138,7 @@ async def start_command(client: Client, message: Message):
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium", style=enums.ButtonStyle.PRIMARY)]
                 ]
                 
-                await asyncio.sleep(random.uniform(1.2, 2.0))
+                await asyncio.sleep(random.uniform(1, 1.5))
                 stop_typing.set()
                 await typing_task
 
