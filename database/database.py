@@ -48,7 +48,61 @@ class Rohit:
         self.fsub_data = self.database['fsub']   
         self.rqst_fsub_data = self.database['request_forcesub']
         self.rqst_fsub_Channel_data = self.database['request_forcesub_channel']
-        
+        # Dynamic Settings ke liye naya collection target kiya
+        self.settings_data = self.database['bot_settings']   
+
+
+    # ==========================================
+    # DYNAMIC BOT SETTINGS MANAGEMENT (NEW)
+    # ==========================================
+    
+    async def get_bot_settings(self):
+        """Database se live shortener aur verify settings nikalne ke liye"""
+        data = await self.settings_data.find_one({"_id": "bot_config"})
+        if not data:
+            # Agar database khali hai toh config file ke static variables default banenge
+            try:
+                from config import DEFAULT_SHORTLINK_URL, DEFAULT_SHORTLINK_API, DEFAULT_VERIFY_EXPIRE
+                return {
+                    "verify_time": DEFAULT_VERIFY_EXPIRE,
+                    "shortener_url": DEFAULT_SHORTLINK_URL,
+                    "shortener_api": DEFAULT_SHORTLINK_API,
+                    "verify_mode": True
+                }
+            except ImportError:
+                # Fallback agar config.py me variables badle na hon to purane waale utha lega
+                from config import SHORTLINK_URL, SHORTLINK_API, VERIFY_EXPIRE
+                return {
+                    "verify_time": VERIFY_EXPIRE,
+                    "shortener_url": SHORTLINK_URL,
+                    "shortener_api": SHORTLINK_API,
+                    "verify_mode": True
+                }
+        return {
+            "verify_time": data.get("verify_time", 3600),
+            "shortener_url": data.get("shortener_url", ""),
+            "shortener_api": data.get("shortener_api", ""),
+            "verify_mode": data.get("verify_mode", True)
+        }
+
+    async def update_bot_settings(self, key: str, value):
+        """Settings panel se aane wali values ko update karne ke liye"""
+        await self.settings_data.update_one(
+            {"_id": "bot_config"},
+            {"$set": {key: value}},
+            upsert=True
+        )
+
+    async def toggle_verify_mode(self):
+        """Verification ko bina bot restart kiye ON/OFF (Toggle) karne ke liye"""
+        settings = await self.get_bot_settings()
+        new_mode = not settings["verify_mode"]
+        await self.settings_data.update_one(
+            {"_id": "bot_config"},
+            {"$set": {"verify_mode": new_mode}},
+            upsert=True
+        )
+        return new_mode
 
 
     # USER DATA
