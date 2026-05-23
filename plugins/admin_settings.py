@@ -124,7 +124,7 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         await query.answer("Panel Closed.")
 
 # 📥 4. HIGH PRIORITY INPUT HANDLER (Group -100)
-@Bot.on_message(filters.text & filters.private & is_admin, group=-100)
+@Bot.on_message(filters.text & filters.private & is_admin, group=0)
 async def handle_admin_inputs(client: Client, message: Message):
     user_id = message.from_user.id
     
