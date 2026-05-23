@@ -19,8 +19,6 @@ from database.database import *
 from database.db_premium import *
 from pytz import timezone
 
-# Admin settings panel ka handler import kiya
-from admin_settings import settings_handler
 
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
