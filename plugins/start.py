@@ -25,6 +25,19 @@ TUT_VID = f"{TUT_VID}"
 # Global dict for active cancellation tracking
 cancel_tasks = {}
 
+# ✨ PREMIUM BACKGROUND ANIMATION MANAGER FUNCTION
+async def keep_animation_alive(client: Client, chat_id: int, action: ChatAction, stop_event: asyncio.Event):
+    """Jab tak stop_event set nahi hota, ye function har 3.5 second me animation refresh karega"""
+    while not stop_event.is_set():
+        try:
+            await client.send_chat_action(chat_id=chat_id, action=action)
+        except Exception:
+            pass
+        try:
+            await asyncio.sleep(3.5)
+        except asyncio.CancelledError:
+            break
+
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
     try:
@@ -84,8 +97,9 @@ async def start_command(client: Client, message: Message):
                 if verify_status['verify_token'] != token:
                     return await message.reply("⚠️ 𝖨𝗇𝗏𝖺ʟɪᴅ 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
 
-                # Typing animation lagayein jab token verify ho raha ho
-                await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
+                # ✨ START TYPING ANIMATION (Human feel ke liye)
+                stop_typing = asyncio.Event()
+                typing_task = asyncio.create_task(keep_animation_alive(client, message.chat.id, ChatAction.TYPING, stop_typing))
 
                 await db.update_verify_status(id, is_verified=True, verified_time=time.time())
                 current = await db.get_verify_count(id)
@@ -97,17 +111,23 @@ async def start_command(client: Client, message: Message):
 
                 btn = [[InlineKeyboardButton("🚀 Gᴇᴛ Fɪʟᴇ Nᴏᴡ", url=f"https://t.me/{client.username}?start={file_id}")]]
                 
+                # Dynamic human delay
+                await asyncio.sleep(random.uniform(1.5, 2.3))
+                stop_typing.set()
+                await typing_task
+
                 return await message.reply(
                     f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVαʟɪᴅ ғᴏʀ: {get_exp_time(VERIFY_EXPIRE)}\n\n"
-                    "Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 👇",
+                    "Cʟɪᴄlick ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 👇",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
             # 3️⃣ CASE: 🔥 STRICT ENFORCEMENT BLOCK 🔥
             if not verify_status['is_verified'] and not is_premium:
-                # Token generation ke waqt thoda premium look dene ke liye typing dikhayenge
-                await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
-                
+                # ✨ START TYPING ANIMATION (Generating shortlink process feel)
+                stop_typing = asyncio.Event()
+                typing_task = asyncio.create_task(keep_animation_alive(client, message.chat.id, ChatAction.TYPING, stop_typing))
+
                 token = ''.join(random.choices(rohit.ascii_letters + rohit.digits, k=10))
                 await db.update_verify_status(id, verify_token=token, link=base64_string)
                 
@@ -117,8 +137,13 @@ async def start_command(client: Client, message: Message):
                      InlineKeyboardButton("• ᴛᴜᴛᴏʀɪᴀʟ •", url=TUT_VID)],
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium", style=enums.ButtonStyle.PRIMARY)]
                 ]
+                
+                await asyncio.sleep(random.uniform(1.2, 2.0))
+                stop_typing.set()
+                await typing_task
+
                 return await message.reply(
-                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b><b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -151,6 +176,14 @@ async def start_command(client: Client, message: Message):
                 InlineKeyboardButton("🌀 𝙲𝙰𝙽𝙲𝙴𝙻 🌀", callback_data=f"cancel_delivery_{user_id}", style=enums.ButtonStyle.DANGER)
             ]
         ])
+        
+        # Searching feel dene ke liye pehle typing animation chalayenge
+        stop_typing = asyncio.Event()
+        typing_task = asyncio.create_task(keep_animation_alive(client, message.chat.id, ChatAction.TYPING, stop_typing))
+        await asyncio.sleep(1.5)
+        stop_typing.set()
+        await typing_task
+
         temp_msg = await message.reply("<b>🔺ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ</b>", reply_markup=wait_markup)
         
         try:
@@ -162,41 +195,47 @@ async def start_command(client: Client, message: Message):
             except: pass
             return
 
+        # ✨ FILE SENDING START: BACKGROUND UPLOAD_DOCUMENT ANIMATION TRIGGER
+        stop_upload = asyncio.Event()
+        upload_task = asyncio.create_task(keep_animation_alive(client, message.chat.id, ChatAction.UPLOAD_DOCUMENT, stop_upload))
+
         codeflix_msgs = []
-        for msg in messages:
-            await asyncio.sleep(0.05)
+        try:
+            for msg in messages:
+                await asyncio.sleep(0.05)
 
-            if cancel_tasks.get(user_id, False) is True:
-                break
-
-            if msg.service or (not msg.text and not msg.media):
-                continue  
-
-            # ✨ HERE IS THE FIX: Har file bhejne se pehle "sending file..." status dikhega
-            await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.UPLOAD_DOCUMENT)
-
-            caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, 
-                                             filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and bool(msg.document)
-                       else ("" if not msg.caption else msg.caption.html))
-
-            reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
-
-            try:
-                copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
-                                            reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
-                codeflix_msgs.append(copied_msg)
-            except FloodWait as e:
-                await asyncio.sleep(e.x)
-                if cancel_tasks.get(user_id, False) is True: 
+                if cancel_tasks.get(user_id, False) is True:
                     break
-                copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
-                                            reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
-                codeflix_msgs.append(copied_msg)
-            except Exception as e:
-                print(f"Failed to send message: {e}")
-                pass
 
-            await asyncio.sleep(1)
+                if msg.service or (not msg.text and not msg.media):
+                    continue  
+
+                caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, 
+                                                 filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and bool(msg.document)
+                           else ("" if not msg.caption else msg.caption.html))
+
+                reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
+
+                try:
+                    copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
+                                                reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
+                    codeflix_msgs.append(copied_msg)
+                except FloodWait as e:
+                    await asyncio.sleep(e.x)
+                    if cancel_tasks.get(user_id, False) is True: 
+                        break
+                    copied_msg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, 
+                                                reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
+                    codeflix_msgs.append(copied_msg)
+                except Exception as e:
+                    print(f"Failed to send message: {e}")
+                    pass
+
+                await asyncio.sleep(random.uniform(1.0, 1.8)) # Human gap between multiple files
+        finally:
+            # Kaam khatam hone par animation task ko band karo
+            stop_upload.set()
+            await upload_task
 
         was_cancelled = cancel_tasks.pop(user_id, False)
 
@@ -211,7 +250,7 @@ async def start_command(client: Client, message: Message):
 
         if FILE_AUTO_DELETE > 0:
             notification_msg = await message.reply(
-                f"<b>Tʜɪs Fɪʟᴇ ᴡɪʟʟ ʙᴇ Dᴇʟᴇᴛᴇ Deleted ɪɴ  {get_exp_time(FILE_AUTO_DELETE)}. Pʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢES ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs Dᴇʟᴇᴛᴇᴅ.</b>"
+                f"<b>Tʜɪs Fɪʟᴇ ᴡɪʟʟ ʙᴇ Dᴇʟᴇᴛᴇ Deleted ɪɴ  {get_exp_time(FILE_AUTO_DELETE)}. Pʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢES ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs DᴇʟᴇᴛᴇDeleted.</b>"
             )
 
             await asyncio.sleep(FILE_AUTO_DELETE)
@@ -234,23 +273,19 @@ async def start_command(client: Client, message: Message):
                 ) if reload_url else None
 
                 await notification_msg.edit(
-                    "<b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\nᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
+                    "<b><b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\nᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
                     reply_markup=keyboard
                 )
             except Exception as e:
                 print(f"Error updating notification with 'Get File Again' button: {e}")
     else:
-        try:
-            sticker_msg = await message.reply_sticker(sticker=START_STICKER)
-            await asyncio.sleep(0.4)
-            await sticker_msg.delete()
-        except Exception as e:
-            print(f"Sticker Loading Error: {e}")
-            pass  
-        
-        # Simple start pe bhi typing animation trigger kar dete hain premium feel ke liye
-        await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
-        
+        # Normal start pe typing animation
+        stop_typing = asyncio.Event()
+        typing_task = asyncio.create_task(keep_animation_alive(client, message.chat.id, ChatAction.TYPING, stop_typing))
+        await asyncio.sleep(1.2)
+        stop_typing.set()
+        await typing_task
+
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", callback_data='channels' , style=enums.ButtonStyle.PRIMARY)],
@@ -274,7 +309,6 @@ async def start_command(client: Client, message: Message):
 
         return
 
-# 🔥 FIXED & OVERRIDDEN CALLBACK QUEUE FOR ABSOLUTE SAFETY 🔥
 @Bot.on_callback_query(filters.regex(r"^cancel_delivery_"), group=-1)
 async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
     try:
@@ -321,7 +355,6 @@ async def not_joined(client: Client, message: Message):
         for total, chat_id in enumerate(all_channels, start=1):
             mode = await db.get_channel_mode(chat_id)  
 
-            # ✨ HERE IS THE FIX: message.reply_chat_action ki jagah client.send_chat_action use kiya hai sahi format me
             await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
 
             if not await is_sub(client, user_id, chat_id):
@@ -395,22 +428,13 @@ async def check_plan(client: Client, message: Message):
     await message.reply(status_message)
 
 #=====================================================================================##
+
 @Bot.on_message(filters.command('addpremium') & filters.private & admin)
 async def add_premium_user_command(client, msg):
     if len(msg.command) != 4:
         await msg.reply_text(
             "Usage: /addpremium <user_id> <time_value> <time_unit>\n\n"
-            "Time Units:\n"
-            "s - seconds\n"
-            "m - minutes\n"
-            "h - hours\n"
-            "d - days\n"
-            "y - years\n\n"
-            "Examples:\n"
-            "/addpremium 123456789 30 m → 30 minutes\n"
-            "/addpremium 123456789 2 h → 2 hours\n"
-            "/addpremium 123456789 1 d → 1 day\n"
-            "/addpremium 123456789 1 y → 1 year"
+            "Time Units:\n s - seconds, m - minutes, h - hours, d - days, y - years"
         )
         return
 
@@ -420,37 +444,28 @@ async def add_premium_user_command(client, msg):
         time_unit = msg.command[3].lower()  
 
         expiration_time = await add_premium(user_id, time_value, time_unit)
-
-        await msg.reply_text(
-            f"✅ User `{user_id}` added as a premium user for {time_value} {time_unit}.\n"
-            f"Expiration Time: `{expiration_time}`"
-        )
+        await msg.reply_text(f"✅ User `{user_id}` added for {time_value} {time_unit}.\nExpiry: `{expiration_time}`")
 
         await client.send_message(
             chat_id=user_id,
-            text=(
-                f"🎉 Premium Activated!\n\n"
-                f"You have received premium access for `{time_value} {time_unit}`.\n"
-                f"Expires on: `{expiration_time}`"
-            ),
+            text=f"🎉 Premium Activated for `{time_value} {time_unit}`.\nExpires on: `{expiration_time}`",
         )
-
     except ValueError:
-        await msg.reply_text("❌ Invalid input. Please ensure user ID and time value are numbers.")
+        await msg.reply_text("❌ Invalid input.")
     except Exception as e:
-        await msg.reply_text(f"⚠️ An error occurred: `{str(e)}`")
+        await msg.reply_text(f"⚠️ Error: `{str(e)}`")
 
 @Bot.on_message(filters.command('remove_premium') & filters.private & admin)
 async def pre_remove_user(client: Client, msg: Message):
     if len(msg.command) != 2:
-        await msg.reply_text("useage: /remove_premium user_id ")
+        await msg.reply_text("Usage: /remove_premium user_id")
         return
     try:
         user_id = int(msg.command[1])
         await remove_premium(user_id)
         await msg.reply_text(f"User {user_id} has been removed.")
     except ValueError:
-        await msg.reply_text("user_id must be an integer or not available in database.")
+        await msg.reply_text("Invalid user_id.")
 
 @Bot.on_message(filters.command('premium_users') & filters.private & admin)
 async def list_premium_users_command(client, message):
@@ -473,8 +488,7 @@ async def list_premium_users_command(client, message):
 
             user_info = await client.get_users(user_id)
             username = user_info.username if user_info.username else "No Username"
-            first_name = user_info.first_name
-            mention=user_info.mention
+            mention = user_info.mention
 
             days, hours, minutes, seconds = (
                 remaining_time.days,
@@ -483,23 +497,14 @@ async def list_premium_users_command(client, message):
                 remaining_time.seconds % 60,
             )
             expiry_info = f"{days}d {hours}h {minutes}m {seconds}s left"
-
-            premium_user_list.append(
-                f"UserID: <code>{user_id}</code>\n"
-                f"User: @{username}\n"
-                f"Name: {mention}\n"
-                f"Expiry: {expiry_info}"
-            )
+            premium_user_list.append(f"UserID: <code>{user_id}</code>\nUser: @{username}\nExpiry: {expiry_info}")
         except Exception as e:
-            premium_user_list.append(
-                f"UserID: <code>{user_id}</code>\n"
-                f"Error: Unable to fetch user details ({str(e)})"
-            )
+            premium_user_list.append(f"UserID: <code>{user_id}</code>\nError: {str(e)}")
 
     if len(premium_user_list) == 1:  
         await message.reply_text("I found 0 active premium users in my DB")
     else:
-        await message.reply_text("\n\n".join(premium_user_list), parse_mode=None)
+        await message.reply_text("\n\n".join(premium_user_list))
 
 #=====================================================================================##
 
