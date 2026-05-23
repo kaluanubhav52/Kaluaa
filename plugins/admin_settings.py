@@ -1,7 +1,7 @@
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from database.database import db
-from config import OWNER_ID
+from database.database import *
+from config import *
 from bot import Bot
 
 # Unique State Management
