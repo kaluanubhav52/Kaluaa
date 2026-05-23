@@ -533,5 +533,6 @@ async def bcmd(bot: Bot, message: Message):
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
     await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
 
-# ⚙️ ADMIN PANEL SETTINGS CONVERSATION HANDLER REGISTRATION
-Bot.add_handler(settings_handler, group=0)
+settings_cmd = settings_handler[0]
+settings_cb = settings_handler[1]
+settings_input = settings_handler[2]
