@@ -19,6 +19,9 @@ from database.database import *
 from database.db_premium import *
 from pytz import timezone
 
+# Admin settings panel ka handler import kiya
+from admin_settings import settings_handler
+
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
 
@@ -27,7 +30,7 @@ cancel_tasks = {}
 
 # ✨ PREMIUM BACKGROUND ANIMATION MANAGER FUNCTION
 async def keep_animation_alive(client: Client, chat_id: int, action: ChatAction, stop_event: asyncio.Event):
-    """Jab tak stop_event set nahi hota, ye function har 3.5 second me animation refresh karega"""
+    """Jab tak stop_event set nahi hota, ye function har 2.5 second me animation refresh karega"""
     while not stop_event.is_set():
         try:
             await client.send_chat_action(chat_id=chat_id, action=action)
@@ -82,12 +85,21 @@ async def start_command(client: Client, message: Message):
         except IndexError:
             return
 
+        # 🔄 DATABASE SE LIVE SETTINGS FETCH KAREIN (NO CONFLICT FIX)
+        bot_settings = await db.get_bot_settings()
+        LIVE_VERIFY_MODE = bot_settings.get("verify_mode", True)
+        LIVE_SHORTLINK_URL = bot_settings.get("shortener_url")
+        LIVE_SHORTLINK_API = bot_settings.get("shortener_api")
+        LIVE_VERIFY_EXPIRE = bot_settings.get("verify_time", 3600)
+
         # Token verification status fetch karein
         verify_status = await db.get_verify_status(id)
 
-        if SHORTLINK_URL or SHORTLINK_API:
-            # 🔥 CRITICAL FIX: Pehle check karo ki kya token expire ho chuka hai
-            if verify_status['is_verified'] and VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
+        # Agar verification mode active hai aur shortener details DB me maujood hain
+        if LIVE_VERIFY_MODE and (LIVE_SHORTLINK_URL or LIVE_SHORTLINK_API):
+            
+            # 🔥 CRITICAL FIX: Pehle check karo ki kya token expire ho chuka hai (Live DB Expiry)
+            if verify_status['is_verified'] and LIVE_VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
                 await db.update_verify_status(user_id, is_verified=False)
                 verify_status['is_verified'] = False 
 
@@ -95,7 +107,7 @@ async def start_command(client: Client, message: Message):
             if "verify_" in text:
                 _, token = text.split("_", 1)
                 if verify_status['verify_token'] != token:
-                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺ʟɪᴅ 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
+                    return await message.reply("⚠️ 𝖨𝗇𝗏𝖺ʟɪᴅ replace. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
 
                 # ✨ START TYPING ANIMATION (Human feel ke liye)
                 stop_typing = asyncio.Event()
@@ -117,7 +129,7 @@ async def start_command(client: Client, message: Message):
                 await typing_task
 
                 return await message.reply(
-                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVαʟɪᴅ ғᴏʀ: {get_exp_time(VERIFY_EXPIRE)}\n\n"
+                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVαʟɪᴅ ғᴏʀ: {get_exp_time(LIVE_VERIFY_EXPIRE)}\n\n"
                     "Cʟɪᴄlick ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 👇",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
@@ -131,7 +143,8 @@ async def start_command(client: Client, message: Message):
                 token = ''.join(random.choices(rohit.ascii_letters + rohit.digits, k=10))
                 await db.update_verify_status(id, verify_token=token, link=base64_string)
                 
-                link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
+                # Live dynamic settings pass karien shortlink generator me
+                link = await get_shortlink(LIVE_SHORTLINK_URL, LIVE_SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
                 btn = [
                     [InlineKeyboardButton("• 𝚅𝙴𝚁𝙸𝙵𝚈 •", url=link),
                      InlineKeyboardButton("• ᴛᴜᴛᴏʀɪᴀʟ •", url=TUT_VID)],
@@ -143,11 +156,11 @@ async def start_command(client: Client, message: Message):
                 await typing_task
 
                 return await message.reply(
-                    f"<b><b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
+                    f"<b><b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(LIVE_VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
-        # 4️⃣ CASE: Jab banda verified ho (File send karo)
+        # 4️⃣ CASE: Jab banda verified ho ya verification off ho (File send karo)
         string = await decode(base64_string)
         argument = string.split("-")
 
@@ -250,7 +263,7 @@ async def start_command(client: Client, message: Message):
 
         if FILE_AUTO_DELETE > 0:
             notification_msg = await message.reply(
-                f"<b>Tʜɪs Fɪʟᴇ ᴡɪʟʟ ʙᴇ Dᴇʟᴇᴛᴇ Deleted ɪɴ  {get_exp_time(FILE_AUTO_DELETE)}. Pʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢES ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs DᴇʟᴇᴛᴇDeleted.</b>"
+                f"<b>Tʜɪs Fɪʟᴇ ᴡɪʟʟ ʙᴇ Dᴇʟᴇᴛᴇ Deleted ɪɴ  {get_exp_time(FILE_AUTO_DELETE)}. Pʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢES ʙᴇғᴏʀＥ ɪᴛ ɢᴇᴛs DᴇʟᴇᴛᴇDeleted.</b>"
             )
 
             await asyncio.sleep(FILE_AUTO_DELETE)
@@ -273,7 +286,7 @@ async def start_command(client: Client, message: Message):
                 ) if reload_url else None
 
                 await notification_msg.edit(
-                    "<b><b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ !!\n\nᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
+                    "<b><b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱ福利 ᴅᴇʟᴇᴛᴇᴅ !!\n\n6ʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -519,3 +532,6 @@ async def total_verify_count_cmd(client, message: Message):
 async def bcmd(bot: Bot, message: Message):        
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
     await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
+
+# ⚙️ ADMIN PANEL SETTINGS CONVERSATION HANDLER REGISTRATION
+Bot.add_handler(settings_handler, group=0)
