@@ -74,19 +74,13 @@ async def start_command(client: Client, message: Message):
             base64_string = text.split(" ", 1)[1]
         except IndexError:
             return
-        bot_settings = await db.get_bot_settings()
-        LIVE_VERIFY_MODE = bot_settings.get("verify_mode", True)
-        LIVE_SHORTLINK_URL = bot_settings.get("shortener_url")
-        LIVE_SHORTLINK_API = bot_settings.get("shortener_api")
-        LIVE_VERIFY_EXPIRE = bot_settings.get("verify_time", 3600)
 
         # Token verification status
         verify_status = await db.get_verify_status(id)
 
-        if LIVE_VERIFY_MODE and (LIVE_SHORTLINK_URL or LIVE_SHORTLINK_API):
-            
-            # 🔥 CRITICAL FIX: Pehle check karo ki kya token expire ho chuka hai (Live DB Expiry)
-            if verify_status['is_verified'] and LIVE_VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
+        if SHORTLINK_URL or SHORTLINK_API:
+            # Check for token expiry
+            if verify_status['is_verified'] and VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
                 await db.update_verify_status(user_id, is_verified=False)
 
             # 2️⃣ CASE: Jab banda token verify karke wapas aaye
@@ -107,7 +101,7 @@ async def start_command(client: Client, message: Message):
                 btn = [[InlineKeyboardButton("🚀 Gᴇᴛ Fɪʟᴇ Nᴏᴡ", url=f"https://t.me/{client.username}?start={file_id}")]]
                 
                 return await message.reply(
-                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVαʟɪᴅ ғᴏʀ: {get_exp_time(LIVE_VERIFY_EXPIRE)}\n\n"
+                    f"✅ <b>𝗧𝗼𝗸𝗲𝗻 𝘃𝗲𝗿𝗶𝗳𝗶𝗲𝗱!</b>\n\nVαʟɪᴅ ғᴏʀ: {get_exp_time(VERIFY_EXPIRE)}\n\n"
                     "Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 👇",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
@@ -118,14 +112,14 @@ async def start_command(client: Client, message: Message):
                 
                 await db.update_verify_status(id, verify_token=token, link=base64_string)
                 
-                link = await get_shortlink(LIVE_SHORTLINK_URL, LIVE_SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
+                link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
                 btn = [
                     [InlineKeyboardButton("• ᴏᴘᴇɴ ʟɪɴᴋ •", url=link),
                      InlineKeyboardButton("• ᴛᴜᴛᴏʀɪᴀʟ •", url=TUT_VID)],
                     [InlineKeyboardButton("• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •", callback_data="premium", style=enums.ButtonStyle.SUCCESS)]
                 ]
                 return await message.reply(
-                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(LIVE_VERIFY_EXPIRE)}",
+                    f"<b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
 
@@ -254,7 +248,7 @@ async def start_command(client: Client, message: Message):
                 [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", url="https://t.me/freestoryhubMR", style=enums.ButtonStyle.PRIMARY)],
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
-                    InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "admin_settings_menu")
+                    InlineKeyboardButton('ʜᴇʟᴘ •', callback_data = "help")
                 ]
             ]
         )
