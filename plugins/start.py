@@ -112,7 +112,7 @@ async def start_command(client: Client, message: Message):
                 
                 await db.update_verify_status(id, verify_token=token, link=base64_string)
                 
-                link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
+                link = await get_shortlink(LIVE_SHORTLINK_URL, LIVE_SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
                 btn = [
                     [InlineKeyboardButton("• ᴏᴘᴇɴ ʟɪɴᴋ •", url=link),
                      InlineKeyboardButton("• ᴛᴜᴛᴏʀɪᴀʟ •", url=TUT_VID)],
