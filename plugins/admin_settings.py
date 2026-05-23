@@ -4,8 +4,7 @@ from database.database import *
 from config import *
 from bot import Bot
 
-
-# Dynamic State Storage (Memory tracking)
+# Dynamic State Storage
 ASK_TIME, ASK_URL, ASK_API = 101, 102, 103
 admin_states = {}
 
@@ -14,7 +13,7 @@ def admin_filter(_, __, message: Message):
     try:
         return message.from_user.id == int(OWNER_ID)
     except:
-        return message.from_user.id == 5898522531  # Aapka back-up Admin ID
+        return message.from_user.id == 5898522531  # Backup Admin ID
 
 is_admin = filters.create(admin_filter)
 
@@ -37,18 +36,18 @@ async def settings_panel(client: Client, message: Message):
         reply_markup=InlineKeyboardMarkup(btn)
     )
 
-# ❌ 2. Cancel Command (Agar input state cancel karni ho)
+# ❌ 2. Cancel Command
 @Bot.on_message(filters.command("cancel") & filters.private & is_admin, group=-10)
 async def cancel_input(client: Client, message: Message):
     user_id = message.from_user.id
     if user_id in admin_states:
         del admin_states[user_id]
-        await message.reply_text("❌ **Setting process ko cancel kar diya gaya hai.** Ab aap normal use kar sakte hain.")
+        await message.reply_text("❌ **Setting process ko cancel kar diya gaya hai.**")
         message.stop_propagation()
     else:
         await message.reply_text("Pehle se koi setting change process active nahi hai.")
 
-# 📊 3. Callbacks Handle karne ke liye
+# 📊 3. Callbacks Handle
 @Bot.on_callback_query(filters.regex(r"^(toggle_verify|set_url|set_api|set_time|close_settings|admin_settings_menu)$"))
 async def handle_settings_callbacks(client: Client, query: CallbackQuery):
     data = query.data
@@ -56,7 +55,7 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
     
     if data == "admin_settings_menu":
         if query.from_user.id != int(OWNER_ID) and query.from_user.id != 5898522531:
-            await query.answer("⚠️ Ghabraiye nahi! Yeh panel sirf Bot Admin ke liye hai.", show_alert=True)
+            await query.answer("⚠️ Yeh panel sirf Bot Admin ke liye hai.", show_alert=True)
             return
             
         settings = await db.get_bot_settings()
@@ -82,7 +81,8 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         current_mode = settings.get("verify_mode", True)
         new_mode = not current_mode
         
-        await db.update_bot_settings(verify_mode=new_mode)
+        # FIXED: Aapke positional argument ('key', value) format ke hisab se change kiya
+        await db.update_bot_settings("verify_mode", new_mode)
         status_txt = "🟢 ENABLED" if new_mode else "🔴 DISABLED"
         await query.answer(f"Verification Mode turned {status_txt}!", show_alert=True)
         
@@ -95,7 +95,6 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         ]
         await query.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
 
-    # Yahan hum states store kar rahe hain memory me strict handling ke liye
     elif data == "set_url":
         admin_states[user_id] = ASK_URL
         await query.message.reply_text(
@@ -107,7 +106,7 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
     elif data == "set_api":
         admin_states[user_id] = ASK_API
         await query.message.reply_text(
-            "🔑 **Sᴇᴛ SʜᴏＲᴛᴇɴᴇʀ API KEY:**\n\nApni nayi API Key yahan send karein.\n\nTo stop this process send: /cancel",
+            "🔑 **Sᴇᴛ Sʜᴏʀᴛᴇɴᴇʀ API KEY:**\n\nApni nayi API Key yahan send karein.\n\nTo stop this process send: /cancel",
             reply_markup=ForceReply(selective=True)
         )
         await query.answer()
@@ -115,7 +114,7 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
     elif data == "set_time":
         admin_states[user_id] = ASK_TIME
         await query.message.reply_text(
-            "⏳ **Sᴇᴛ TᴏᴋＥɴ Exᴘɪʀʏ Tɪᴍᴇ:**\n\nToken validity seconds me bhejein (e.g. `180`).\n\nTo stop this process send: /cancel",
+            "⏳ **Sᴇᴛ Tᴏᴋᴇɴ Exᴘɪʀʏ Tɪᴍᴇ:**\n\nToken validity seconds me bhejein (e.g. `180`).\n\nTo stop this process send: /cancel",
             reply_markup=ForceReply(selective=True)
         )
         await query.answer()
@@ -124,31 +123,31 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         await query.message.delete()
         await query.answer("Panel Closed.")
 
-# 📥 4. CRITICAL INPUT HANDLER (Group priority set to -100 jisse koi file handler isko touch bhi na kar paye)
+# 📥 4. HIGH PRIORITY INPUT HANDLER (Group -100)
 @Bot.on_message(filters.text & filters.private & is_admin, group=-100)
 async def handle_admin_inputs(client: Client, message: Message):
     user_id = message.from_user.id
     
-    # Agar state memory me active nahi hai, toh chupchaap baki plugins ko chalne do
     if user_id not in admin_states:
         return
         
     state = admin_states[user_id]
     input_text = message.text.strip()
     
-    # Agar user cancel command bhejta hai toh handle karne do normal tarike se
     if input_text.startswith("/cancel"):
         return
 
     if state == ASK_URL:
         clean_url = input_text.replace("https://", "").replace("http://", "").split("/")[0]
-        await db.update_bot_settings(shortener_url=clean_url)
+        # FIXED: Calling style changed to positional key-value
+        await db.update_bot_settings("shortener_url", clean_url)
         await message.reply_text(f"✅ **Shortener URL successfully updated to:** `{clean_url}`")
-        del admin_states[user_id] # State cleared
-        message.stop_propagation() # Dusre file saving handlers ko block kar diya hamesha ke liye
+        del admin_states[user_id]
+        message.stop_propagation()
         
     elif state == ASK_API:
-        await db.update_bot_settings(shortener_api=input_text)
+        # FIXED: Calling style changed to positional key-value
+        await db.update_bot_settings("shortener_api", input_text)
         await message.reply_text(f"✅ **Shortener API Key successfully updated!**")
         del admin_states[user_id]
         message.stop_propagation()
@@ -156,7 +155,8 @@ async def handle_admin_inputs(client: Client, message: Message):
     elif state == ASK_TIME:
         try:
             seconds = int(input_text)
-            await db.update_bot_settings(verify_time=seconds)
+            # FIXED: Calling style changed to positional key-value
+            await db.update_bot_settings("verify_time", seconds)
             await message.reply_text(f"✅ **Token Expiry Time successfully updated to:** `{seconds}` seconds.")
             del admin_states[user_id]
             message.stop_propagation()
