@@ -1,7 +1,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from database.database import database 
+from database.database import *
 from bot import Bot
 
 # Sirf Admin access ke liye
