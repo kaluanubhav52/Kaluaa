@@ -19,8 +19,6 @@ from database.database import *
 from database.db_premium import *
 from pytz import timezone
 
-
-
 BAN_SUPPORT = f"{BAN_SUPPORT}"
 TUT_VID = f"{TUT_VID}"
 
@@ -155,9 +153,14 @@ async def start_command(client: Client, message: Message):
                 await typing_task
 
                 return await message.reply(
-                    f"<b><b>𝗬𝗼𝘂𝗿 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(LIVE_VERIFY_EXPIRE)}",
+                    f"<b><b>𝗬𝗼𝘂ρ 𝘁𝗼𝗸𝗲𝗻 𝗵𝗮𝘀 𝗲𝘅𝗽𝗶𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝗿𝗲𝗳𝗿𝗲𝘀𝗵 ʏᴏᴜʀ ᴛᴏᴋᴇ𝗻 ᴛᴏ 𝗰𝗼𝗻𝘁𝗶𝗻𝘂𝗲..</b>\n\n<b>Tᴏᴋᴇɴ Tɪᴍᴇᴏᴜᴛ:</b> {get_exp_time(LIVE_VERIFY_EXPIRE)}",
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
+
+        # 🔄 DYNAMIC CHANNEL ID MANAGEMENT INTEGRATION
+        db_channel_id = await db.get_db_channel()
+        if not db_channel_id:
+            return await message.reply_text("❌ Error: DB Channel ID parameters missing from config and database!")
 
         # 4️⃣ CASE: Jab banda verified ho ya verification off ho (File send karo)
         string = await decode(base64_string)
@@ -166,15 +169,15 @@ async def start_command(client: Client, message: Message):
         ids = []
         if len(argument) == 3:
             try:
-                start = int(int(argument[1]) / abs(client.db_channel.id))
-                end = int(int(argument[2]) / abs(client.db_channel.id))
+                start = int(int(argument[1]) / abs(db_channel_id))
+                end = int(int(argument[2]) / abs(db_channel_id))
                 ids = range(start, end + 1) if start <= end else list(range(start, end - 1, -1))
             except Exception as e:
                 return print(f"Error decoding IDs: {e}")
             
         elif len(argument) == 2:
             try:
-                ids = [int(int(argument[1]) / abs(client.db_channel.id))]
+                ids = [int(int(argument[1]) / abs(db_channel_id))]
             except Exception as e:
                 print(f"Error decoding ID: {e}")
                 return
@@ -285,7 +288,7 @@ async def start_command(client: Client, message: Message):
                 ) if reload_url else None
 
                 await notification_msg.edit(
-                    "<b><b>ʏᴏᴜʀ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱ福利 ᴅᴇʟᴇᴛᴇᴅ !!\n\n6ʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
+                    "<b><b>ʏᴏᴜρ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ ɪꜱ ꜱᴜᴄᴄᴇꜱ|ꜱ福利 ᴅᴇʟᴇᴛᴇᴅ !!\n\n6ʟɪᴄᴋ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴅᴇʟᴇᴛᴇᴅ ᴠɪᴅᴇᴏ / ꜰɪʟᴇ 👇</b>",
                     reply_markup=keyboard
                 )
             except Exception as e:
@@ -305,7 +308,7 @@ async def start_command(client: Client, message: Message):
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton("• ʜᴇʟᴘ •", callback_data = "help")
                 ],[
-                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs (Aᴅᴍɪɴ Oɴʟʏ)", callback_data="admin_settings_menu")]
+                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴgs (Aᴅᴍɪɴ OɴʟY)", callback_data="admin_settings_menu")]
             ]
         )
         await message.reply_photo(
@@ -532,4 +535,3 @@ async def total_verify_count_cmd(client, message: Message):
 async def bcmd(bot: Bot, message: Message):        
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
     await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
-
