@@ -1,5 +1,4 @@
 #(©)Codexbotz
-# Modded by Rohit & AI
 
 import asyncio
 from pyrogram import Client, filters
@@ -8,16 +7,9 @@ from bot import Bot
 from pyrogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from asyncio import TimeoutError
 from helper_func import encode, get_message_id, admin
-from database import * # Humari database file se connection
 
 @Bot.on_message(filters.private & admin & filters.command('batch'))
 async def batch(client: Client, message: Message):
-    # Dynamic DB channel ID fetch karenge
-    db_channel_id = await db.get_db_channel()
-    if not db_channel_id:
-        await message.reply_text("❌ Error: DB Channel ID settings/config mein nahi mili!")
-        return
-
     while True:
         try:
             first_message = await client.ask(text = "Forward the First Message from DB Channel (with Quotes)..\n\nor Send the DB Channel Post Link", chat_id = message.from_user.id, filters=(filters.forwarded | (filters.text & ~filters.forwarded)), timeout=60)
@@ -42,7 +34,8 @@ async def batch(client: Client, message: Message):
             await second_message.reply("❌ Error\n\nthis Forwarded Post is not from my DB Channel or this Link is taken from DB Channel", quote = True)
             continue
 
-    string = f"get-{f_msg_id * abs(db_channel_id)}-{s_msg_id * abs(db_channel_id)}"
+
+    string = f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}"
     base64_string = await encode(string)
     link = f"https://t.me/{client.username}?start={base64_string}"
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')]])
@@ -51,11 +44,6 @@ async def batch(client: Client, message: Message):
 
 @Bot.on_message(filters.private & admin & filters.command('genlink'))
 async def link_generator(client: Client, message: Message):
-    db_channel_id = await db.get_db_channel()
-    if not db_channel_id:
-        await message.reply_text("❌ Error: DB Channel ID settings/config mein nahi mili!")
-        return
-
     while True:
         try:
             channel_message = await client.ask(text = "Forward Message from the DB Channel (with Quotes)..\nor Send the DB Channel Post link", chat_id = message.from_user.id, filters=(filters.forwarded | (filters.text & ~filters.forwarded)), timeout=60)
@@ -68,7 +56,7 @@ async def link_generator(client: Client, message: Message):
             await channel_message.reply("❌ Error\n\nthis Forwarded Post is not from my DB Channel or this Link is not taken from DB Channel", quote = True)
             continue
 
-    base64_string = await encode(f"get-{msg_id * abs(db_channel_id)}")
+    base64_string = await encode(f"get-{msg_id * abs(client.db_channel.id)}")
     link = f"https://t.me/{client.username}?start={base64_string}"
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')]])
     await channel_message.reply_text(f"<b>Here is your link</b>\n\n{link}", quote=True, reply_markup=reply_markup)
@@ -76,11 +64,6 @@ async def link_generator(client: Client, message: Message):
 
 @Bot.on_message(filters.private & admin & filters.command("custom_batch"))
 async def custom_batch(client: Client, message: Message):
-    db_channel_id = await db.get_db_channel()
-    if not db_channel_id:
-        await message.reply_text("❌ Error: DB Channel ID settings/config mein nahi mili!")
-        return
-
     collected = []
     STOP_KEYBOARD = ReplyKeyboardMarkup([["STOP"]], resize_keyboard=True)
 
@@ -88,9 +71,9 @@ async def custom_batch(client: Client, message: Message):
 
     while True:
         try:
-            # FIXED: text param hata diya taaki bot baar-baar prompt text send na kare
             user_msg = await client.ask(
                 chat_id=message.chat.id,
+                text="Waiting for files/messages...\nPress STOP to finish.",
                 timeout=60
             )
         except asyncio.TimeoutError:
@@ -99,14 +82,14 @@ async def custom_batch(client: Client, message: Message):
         if user_msg.text and user_msg.text.strip().upper() == "STOP":
             break
 
+        # 🛠️ EMPTY / SERVICE MESSAGE FILTER ADDED HERE 🛠️
         if user_msg.service or (not user_msg.text and not user_msg.media):
             await message.reply("⚠️ **This message is empty or invalid. Skipping...**")
             continue
 
         try:
-            sent = await user_msg.copy(db_channel_id, disable_notification=True)
+            sent = await user_msg.copy(client.db_channel.id, disable_notification=True)
             collected.append(sent.id)
-            await user_msg.reply_text(f"✅ Message stored in DB Channel (ID: {sent.id}). Send next or press STOP.", quote=True)
         except Exception as e:
             await message.reply(f"❌ Failed to store a message:\n<code>{e}</code>")
             continue
@@ -117,8 +100,8 @@ async def custom_batch(client: Client, message: Message):
         await message.reply("❌ No messages were added to batch.")
         return
 
-    start_id = collected[0] * abs(db_channel_id)
-    end_id = collected[-1] * abs(db_channel_id)
+    start_id = collected[0] * abs(client.db_channel.id)
+    end_id = collected[-1] * abs(client.db_channel.id)
     string = f"get-{start_id}-{end_id}"
     base64_string = await encode(string)
     link = f"https://t.me/{client.username}?start={base64_string}"
