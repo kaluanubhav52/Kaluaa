@@ -18,8 +18,7 @@ from helper_func import *
 from database.database import *
 from database.db_premium import *
 from pytz import timezone
-# Agar dono file ek hi 'plugins' folder me hain:
-from .admin_settings import settings_handler
+
 
 
 BAN_SUPPORT = f"{BAN_SUPPORT}"
@@ -295,7 +294,7 @@ async def start_command(client: Client, message: Message):
         # Normal start pe typing animation
         stop_typing = asyncio.Event()
         typing_task = asyncio.create_task(keep_animation_alive(client, message.chat.id, ChatAction.TYPING, stop_typing))
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(0.5)
         stop_typing.set()
         await typing_task
 
@@ -533,6 +532,3 @@ async def bcmd(bot: Bot, message: Message):
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
     await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
 
-settings_cmd = settings_handler[0]
-settings_cb = settings_handler[1]
-settings_input = settings_handler[2]
