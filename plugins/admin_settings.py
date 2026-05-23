@@ -1,25 +1,24 @@
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from pyrogram.handlers import MessageHandler, CallbackQueryHandler
-from database.database import *
-from config import * # Agar config me OWNER_ID hai toh, nahi toh direct ID use karein
+from database.database import db
+from config import OWNER_ID
+from bot import Bot
 
-# Unique State Constants for Registration (Bina conversation handler glitch ke)
-# Isse baki commands ke sath conflict nahi hoga
+# Unique State Management
 ASK_TIME, ASK_URL, ASK_API = 101, 102, 103
 user_states = {}
 
-# Sahi filtering ke liye admin validation filter
+# Admin Validation Filter
 def admin_filter(_, __, message: Message):
-    # Agar multiple admins hain to list use karein, nahi to single OWNER_ID
     try:
         return message.from_user.id == int(OWNER_ID)
     except:
-        return message.from_user.id == 5898522531  # Aapki config ka default owner id
+        return message.from_user.id == 5898522531  # Aapka back-up Admin ID
 
 is_admin = filters.create(admin_filter)
 
-# ⚙️ 1. Main Dashboard Command
+# ⚙️ 1. Main Dashboard Command (Iska group=-1 rakha hai taaki ye sabse pehle chale)
+@Bot.on_message(filters.command("settings") & filters.private & is_admin, group=-1)
 async def settings_panel(client: Client, message: Message):
     settings = await db.get_bot_settings()
     v_mode = "🟢 ENABLED" if settings.get("verify_mode", True) else "🔴 DISABLED"
@@ -38,6 +37,7 @@ async def settings_panel(client: Client, message: Message):
     )
 
 # 📊 2. Callbacks Handle karne ke liye
+@Bot.on_callback_query(filters.regex(r"^(toggle_verify|set_url|set_api|set_time|close_settings)$"))
 async def handle_settings_callbacks(client: Client, query: CallbackQuery):
     data = query.data
     user_id = query.from_user.id
@@ -71,18 +71,19 @@ async def handle_settings_callbacks(client: Client, query: CallbackQuery):
         
     elif data == "set_time":
         user_states[user_id] = ASK_TIME
-        await query.message.reply_text("⏳ **Sᴇᴛ Tᴏᴋᴇɴ Exᴘɪʀʏ Tɪᴍᴇ:**\n\nToken ki validity kitne seconds rakhni hai? (Sirf number bhejein)\nExample: `3600` (1 Ghanta)")
+        await query.message.reply_text("⏳ **Sᴇᴛ Tᴏᴋᴇɴ Exᴘɪʀʏ TɪＭᴇ:**\n\nToken ki validity kitne seconds rakhni hai? (Sirf number bhejein)\nExample: `3600` (1 Ghanta)")
         await query.answer()
         
     elif data == "close_settings":
         await query.message.delete()
         await query.answer("Panel Closed.")
 
-# 📥 3. Admin Input Messages Process karne ke liye
+# 📥 3. Admin Input Messages Process karne ke liye (Iska group=-2 rakha hai taaki baki text handlers se pehle intercept kare)
+@Bot.on_message(filters.text & filters.private & is_admin, group=-2)
 async def handle_admin_inputs(client: Client, message: Message):
     user_id = message.from_user.id
     if user_id not in user_states:
-        return
+        return # Agar admin settings mode me nahi hai toh normal baki commands chalne dega
     
     state = user_states[user_id]
     input_text = message.text.strip()
@@ -92,11 +93,13 @@ async def handle_admin_inputs(client: Client, message: Message):
         await db.update_bot_settings("shortener_url", clean_url)
         await message.reply_text(f"✅ **Shortener URL successfully updated to:** `{clean_url}`")
         del user_states[user_id]
+        message.stop_propagation() # Dusre text handlers tak is message ko nahi jaane dega
         
     elif state == ASK_API:
         await db.update_bot_settings("shortener_api", input_text)
         await message.reply_text(f"✅ **Shortener API Key successfully updated!**")
         del user_states[user_id]
+        message.stop_propagation()
         
     elif state == ASK_TIME:
         try:
@@ -104,14 +107,7 @@ async def handle_admin_inputs(client: Client, message: Message):
             await db.update_bot_settings("verify_time", seconds)
             await message.reply_text(f"✅ **Token Expiry Time successfully updated to:** `{seconds}` seconds.")
             del user_states[user_id]
+            message.stop_propagation()
         except ValueError:
             await message.reply_text("❌ **Invalid Input!** Kripya sirf ek number (seconds me) bhejein. Dobara koshish karein:")
-
-
-# 🛠️ CRITICAL FIX: Jin Handlers ko start.py dhoodh raha hai, unhe list me register kiya
-# Ise hi start.py dhoodh raha hai group registration ke liye
-settings_handler = [
-    MessageHandler(settings_panel, filters.command("settings") & filters.private & is_admin),
-    CallbackQueryHandler(handle_settings_callbacks, filters.regex(r"^(toggle_verify|set_url|set_api|set_time|close_settings)$")),
-    MessageHandler(handle_admin_inputs, filters.text & filters.private & is_admin)
-]
+            message.stop_propagation()
