@@ -31,6 +31,8 @@ FORCE_PIC = os.environ.get("FORCE_PIC", "https://telegra.ph/file/e292b12890b8b4b
 DEFAULT_SHORTLINK_URL = os.environ.get("SHORTLINK_URL", "linkshortify.com")
 DEFAULT_SHORTLINK_API = os.environ.get("SHORTLINK_API", "9d9199caec2c2e30e0670f1549ffa1a316caa541")
 DEFAULT_VERIFY_EXPIRE = int(os.environ.get('VERIFY_EXPIRE', 3600))
+TUT_VID = os.environ.get("TUT_VID","https://t.me/howanubhav/14")
+
 #--------------------------------------------
 
 REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"] 
