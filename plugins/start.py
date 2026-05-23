@@ -74,13 +74,19 @@ async def start_command(client: Client, message: Message):
             base64_string = text.split(" ", 1)[1]
         except IndexError:
             return
+        bot_settings = await db.get_bot_settings()
+        LIVE_VERIFY_MODE = bot_settings.get("verify_mode", True)
+        LIVE_SHORTLINK_URL = bot_settings.get("shortener_url")
+        LIVE_SHORTLINK_API = bot_settings.get("shortener_api")
+        LIVE_VERIFY_EXPIRE = bot_settings.get("verify_time", 3600)
 
         # Token verification status
         verify_status = await db.get_verify_status(id)
 
-        if SHORTLINK_URL or SHORTLINK_API:
-            # Check for token expiry
-            if verify_status['is_verified'] and VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
+        if LIVE_VERIFY_MODE and (LIVE_SHORTLINK_URL or LIVE_SHORTLINK_API):
+            
+            # 🔥 CRITICAL FIX: Pehle check karo ki kya token expire ho chuka hai (Live DB Expiry)
+            if verify_status['is_verified'] and LIVE_VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
                 await db.update_verify_status(user_id, is_verified=False)
 
             # 2️⃣ CASE: Jab banda token verify karke wapas aaye
