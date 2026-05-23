@@ -304,7 +304,8 @@ async def start_command(client: Client, message: Message):
                 [
                     InlineKeyboardButton("• ᴀʙᴏᴜᴛ", callback_data = "about"),
                     InlineKeyboardButton("• ʜᴇʟᴘ •", callback_data = "help")
-                ]
+                ],[
+                    InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs (Aᴅᴍɪɴ Oɴʟʏ)", callback_data="admin_settings_menu")]
             ]
         )
         await message.reply_photo(
