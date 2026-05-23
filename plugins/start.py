@@ -33,7 +33,6 @@ async def start_command(client: Client, message: Message):
         await message.react(emoji="⚡️", big=True)
         pass
     
-    
     user_id = message.from_user.id
     id = message.from_user.id
     is_premium = await is_premium_user(id)
@@ -45,7 +44,6 @@ async def start_command(client: Client, message: Message):
         except:
             pass
 
-    
     # ✅ Check Force Subscription
     if not await is_subscribed(client, user_id):
         return await not_joined(client, message)
@@ -78,7 +76,6 @@ async def start_command(client: Client, message: Message):
             # 🔥 CRITICAL FIX: Pehle check karo ki kya token expire ho chuka hai
             if verify_status['is_verified'] and VERIFY_EXPIRE < (time.time() - verify_status['verified_time']):
                 await db.update_verify_status(user_id, is_verified=False)
-                # Database update karne ke baad local variable ko bhi False kar dein taaki niche check trigger ho
                 verify_status['is_verified'] = False 
 
             # 2️⃣ CASE: Jab banda token verify karke wapas aaye
@@ -87,11 +84,13 @@ async def start_command(client: Client, message: Message):
                 if verify_status['verify_token'] != token:
                     return await message.reply("⚠️ 𝖨𝗇𝗏𝖺ʟɪᴅ 𝗍ᴏᴋᴇɴ. 𝖯ʟᴇᴀ𝗌ᴇ /start 𝖺𝗀αɪɴ.")
 
+                # Typing animation lagayein jab token verify ho raha ho
+                await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
+
                 await db.update_verify_status(id, is_verified=True, verified_time=time.time())
                 current = await db.get_verify_count(id)
                 await db.set_verify_count(id, current + 1)
 
-                # Fetching original saved link safely
                 file_id = verify_status.get("link", "")
                 if not file_id:
                     file_id = base64_string  
@@ -105,10 +104,11 @@ async def start_command(client: Client, message: Message):
                 )
 
             # 3️⃣ CASE: 🔥 STRICT ENFORCEMENT BLOCK 🔥
-            # Agar user verified nahi hai aur premium bhi nahi hai, to yaheen se return karo (Bypass Fix!)
             if not verify_status['is_verified'] and not is_premium:
-                token = ''.join(random.choices(rohit.ascii_letters + rohit.digits, k=10))
+                # Token generation ke waqt thoda premium look dene ke liye typing dikhayenge
+                await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
                 
+                token = ''.join(random.choices(rohit.ascii_letters + rohit.digits, k=10))
                 await db.update_verify_status(id, verify_token=token, link=base64_string)
                 
                 link = await get_shortlink(SHORTLINK_URL, SHORTLINK_API, f'https://t.me/{client.username}?start=verify_{token}')
@@ -142,10 +142,8 @@ async def start_command(client: Client, message: Message):
                 print(f"Error decoding ID: {e}")
                 return
 
-        # Explicitly initialize user's cancel key as False
         cancel_tasks[user_id] = False
 
-        # Beautiful custom layout containing the update channel and cancellation key
         wait_markup = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("𝙳𝙴𝚅𝙴𝙻𝙾𝙿𝙴𝚁🛠️", url="https://t.me/HDFILM0900_BOT", style=enums.ButtonStyle.PRIMARY)
@@ -166,16 +164,16 @@ async def start_command(client: Client, message: Message):
 
         codeflix_msgs = []
         for msg in messages:
-            # 🔄 Yields CPU execution context for a split frame to process the callback query trigger immediately
             await asyncio.sleep(0.05)
 
-            # Critical Interruption Check: immediately exit loop if cancel button is triggered
             if cancel_tasks.get(user_id, False) is True:
                 break
 
-            # 🛠️ EMPTY MESSAGE / SERVICE MESSAGE FILTER ADDED HERE 🛠️
             if msg.service or (not msg.text and not msg.media):
-                continue  # Is khali ya service message ko skip karo, aage mat badho
+                continue  
+
+            # ✨ HERE IS THE FIX: Har file bhejne se pehle "sending file..." status dikhega
+            await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.UPLOAD_DOCUMENT)
 
             caption = (CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, 
                                              filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and bool(msg.document)
@@ -198,19 +196,15 @@ async def start_command(client: Client, message: Message):
                 print(f"Failed to send message: {e}")
                 pass
 
-            # ⏱️ Smooth Asynchronous Delivery Intermission (1.5 seconds)
             await asyncio.sleep(1)
 
-        # Retrieve structural cancellation flag and clear state cache
         was_cancelled = cancel_tasks.pop(user_id, False)
 
-        # Destructively clean temporary UI block safely
         try:
             await temp_msg.delete()
         except:
             pass
 
-        # Stop process flow immediately if cancellation occurred
         if was_cancelled:
             await message.reply_text("❌ **File delivery has been cancelled successfully.**")
             return
@@ -253,6 +247,10 @@ async def start_command(client: Client, message: Message):
         except Exception as e:
             print(f"Sticker Loading Error: {e}")
             pass  
+        
+        # Simple start pe bhi typing animation trigger kar dete hain premium feel ke liye
+        await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
+        
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", callback_data='channels' , style=enums.ButtonStyle.PRIMARY)],
@@ -276,8 +274,6 @@ async def start_command(client: Client, message: Message):
 
         return
 
-        
-
 # 🔥 FIXED & OVERRIDDEN CALLBACK QUEUE FOR ABSOLUTE SAFETY 🔥
 @Bot.on_callback_query(filters.regex(r"^cancel_delivery_"), group=-1)
 async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery):
@@ -288,33 +284,27 @@ async def cancel_delivery_callback(client: Client, callback_query: CallbackQuery
         except: pass
         return
     
-    # Restrict interaction to the specific requester context
     if callback_query.from_user.id != target_user_id:
         try: await callback_query.answer("⚠️ Yeh cancel button aapke liye nahi hai!", show_alert=True)
         except: pass
         return
 
-    # Check if already cancelled to prevent double-click 'MessageNotModified' exception
     if cancel_tasks.get(target_user_id, False) is True:
         try: await callback_query.answer("⏳ Processing cancellation, please wait...", show_alert=False)
         except: pass
         return
 
-    # Commit structural cancel flag change inside the memory dict instantly
     cancel_tasks[target_user_id] = True
     
-    # Send immediate acknowledgement back to Telegram to resolve loading bar instantly
     try:
         await callback_query.answer("❌ Stopping delivery queue...", show_alert=False)
     except:
         pass
     
-    # Destruct current interface safely without triggering text modifications
     try:
         await callback_query.message.delete()
     except (MessageDeleteForbidden, Exception):
         pass
-
 
 #=====================================================================================##
 
@@ -331,7 +321,8 @@ async def not_joined(client: Client, message: Message):
         for total, chat_id in enumerate(all_channels, start=1):
             mode = await db.get_channel_mode(chat_id)  
 
-            await message.reply_chat_action(ChatAction.TYPING)
+            # ✨ HERE IS THE FIX: message.reply_chat_action ki jagah client.send_chat_action use kiya hai sahi format me
+            await client.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
 
             if not await is_sub(client, user_id, chat_id):
                 try:
@@ -399,16 +390,11 @@ async def not_joined(client: Client, message: Message):
 
 @Bot.on_message(filters.command('myplan') & filters.private)
 async def check_plan(client: Client, message: Message):
-    user_id = message.from_user.id  # Get user ID from the message
-
-    # Get the premium status of the user
+    user_id = message.from_user.id  
     status_message = await check_user_plan(user_id)
-
-    # Send the response message to the user
     await message.reply(status_message)
 
 #=====================================================================================##
-# Command to add premium user
 @Bot.on_message(filters.command('addpremium') & filters.private & admin)
 async def add_premium_user_command(client, msg):
     if len(msg.command) != 4:
@@ -431,18 +417,15 @@ async def add_premium_user_command(client, msg):
     try:
         user_id = int(msg.command[1])
         time_value = int(msg.command[2])
-        time_unit = msg.command[3].lower()  # supports: s, m, h, d, y
+        time_unit = msg.command[3].lower()  
 
-        # Call add_premium function
         expiration_time = await add_premium(user_id, time_value, time_unit)
 
-        # Notify the admin
         await msg.reply_text(
             f"✅ User `{user_id}` added as a premium user for {time_value} {time_unit}.\n"
             f"Expiration Time: `{expiration_time}`"
         )
 
-        # Notify the user
         await client.send_message(
             chat_id=user_id,
             text=(
@@ -457,8 +440,6 @@ async def add_premium_user_command(client, msg):
     except Exception as e:
         await msg.reply_text(f"⚠️ An error occurred: `{str(e)}`")
 
-
-# Command to remove premium user
 @Bot.on_message(filters.command('remove_premium') & filters.private & admin)
 async def pre_remove_user(client: Client, msg: Message):
     if len(msg.command) != 2:
@@ -471,83 +452,10 @@ async def pre_remove_user(client: Client, msg: Message):
     except ValueError:
         await msg.reply_text("user_id must be an integer or not available in database.")
 
-
-# Command to list active premium users
 @Bot.on_message(filters.command('premium_users') & filters.private & admin)
 async def list_premium_users_command(client, message):
-    # Define IST timezone
     ist = timezone("Asia/Kolkata")
-
-    # Retrieve all users from the collection
     premium_users_cursor = collection.find({})
-    premium_user_list = ['Active Premium Users in database:']
-    current_time = datetime.now(ist)  # Get current time in IST
-
-    # Use async for to iterate over the async cursor
-    async for user in premium_users_cursor:
-        user_id = user["user_id"]
-        expiration_timestamp = user["expiration_timestamp"]
-
-        try:
-            # Convert expiration_timestamp to a timezone-aware datetime object in IST
-            expiration_time = datetime.fromisoformat(expiration_timestamp).astimezone(ist)
-
-            # Calculate remaining time
-            remaining_time = expiration_time - current_time
-
-            if remaining_time.total_seconds() <= 0:
-                # Remove expired users from the database
-                await collection.delete_one({"user_id": user_id})
-                continue  # Skip to the next user if this one is expired
-
-            # If not expired, retrieve user info
-            user_info = await client.get_users(user_id)
-            username = user_info.username if user_info.username else "No Username"
-            first_name = user_info.first_name
-            mention=user_info.mention
-
-            # Calculate days, hours, minutes, seconds left
-            days, hours, minutes, seconds = (
-                remaining_time.days,
-                remaining_time.seconds // 3600,
-                (remaining_time.seconds // 60) % 60,
-                remaining_time.seconds % 60,
-            )
-            expiry_info = f"{days}d {hours}h {minutes}m {seconds}s left"
-
-            # Add user details to the list
-            premium_user_list.append(
-                f"UserID: <code>{user_id}</code>\n"
-                f"User: @{username}\n"
-                f"Name: {mention}\n"
-                f"Expiry: {expiry_info}"
-            )
-        except Exception as e:
-            premium_user_list.append(
-                f"UserID: <code>{user_id}</code>\n"
-                f"Error: Unable to fetch user details ({str(e)})"
-            )
-
-    if len(premium_user_list) == 1:  # No active users found
-        await message.reply_text("I found 0 active premium users in my DB")
-    else:
-        await message.reply_text("\n\n".join(premium_user_list), parse_mode=None)
-
-
-#=====================================================================================##
-
-@Bot.on_message(filters.command("count") & filters.private & admin)
-async def total_verify_count_cmd(client, message: Message):
-    total = await db.get_total_verify_count()
-    await message.reply_text(f"Tᴏᴛᴀʟ ᴠᴇʀɪғɪᴇᴅ ᴛᴏᴋᴇɴs ᴛᴏᴅᴀʏ: <b>{total}</b>")
-
-
-#=====================================================================================##
-
-@Bot.on_message(filters.command('commands') & filters.private & admin)
-async def bcmd(bot: Bot, message: Message):        
-    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
-    await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
     premium_user_list = ['Active Premium Users in database:']
     current_time = datetime.now(ist)  
 
@@ -565,7 +473,8 @@ async def bcmd(bot: Bot, message: Message):
 
             user_info = await client.get_users(user_id)
             username = user_info.username if user_info.username else "No Username"
-            mention = user_info.mention
+            first_name = user_info.first_name
+            mention=user_info.mention
 
             days, hours, minutes, seconds = (
                 remaining_time.days,
@@ -603,5 +512,5 @@ async def total_verify_count_cmd(client, message: Message):
 
 @Bot.on_message(filters.command('commands') & filters.private & admin)
 async def bcmd(bot: Bot, message: Message):        
-    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʜᴀɴɴᴇʟs •", callback_data = "close")]])
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data = "close")]])
     await message.reply(text=CMD_TXT, reply_markup = reply_markup, quote= True)
