@@ -8,7 +8,7 @@ from bot import Bot
 from pyrogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from asyncio import TimeoutError
 from helper_func import encode, get_message_id, admin
-from database import db  # Humari database file se connection
+from database import * # Humari database file se connection
 
 @Bot.on_message(filters.private & admin & filters.command('batch'))
 async def batch(client: Client, message: Message):
