@@ -5,16 +5,10 @@
 # Copyright (C) 2025 by Codeflix-Bots@Github, < https://github.com/Codeflix-Bots >.
 #
 # This file is part of < https://github.com/Codeflix-Bots/FileStore > project,
-# and is released under the MIT License.
-# Please see < https://github.com/Codeflix-Bots/FileStore/blob/master/LICENSE >
-#
-# All rights reserved.
-#
 
 from aiohttp import web
 from plugins import web_server
 import asyncio
-import pyromod.listen
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 import sys
