@@ -2,7 +2,6 @@
 kurigram 
 #pyrogram
 TgCrypto
-pyromod==1.5
 schedule
 APscheduler
 # --- For-Database ------------ #
