@@ -1,8 +1,4 @@
-#========================================================================
-# Don't Remove Credit Tg - @TDBotDev
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
-# Ask Doubt on telegram https://t.me/TDBotDev 
-#========================================================================
+#(©)Codexbotz
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
@@ -106,9 +102,3 @@ async def custom_batch(client: Client, message: Message):
 
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')]])
     await message.reply(f"<b>Here is your custom batch link:</b>\n\n{link}", reply_markup=reply_markup)
-
-#========================================================================
-# Don't Remove Credit Tg - @TDBotDev
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@TDBotDev
-# Ask Doubt on telegram https://t.me/TDBotDev
-#========================================================================
